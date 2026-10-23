@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Potluck Board</title>
+<title>Potluck dinner</title>
 <script>
 /* ===== Settings: paste your Apps Script web app address (ends in /exec) below. ===== */
 var POTLUCK_CONFIG = {
@@ -115,6 +115,18 @@ input[type=text], input[type=password], textarea {
 .empty-slot { padding: 14px 16px; border: 2px dashed var(--line); border-radius: 16px; background: var(--surface); }
 .state { padding: 20px; border: 2px dashed var(--line); border-radius: 16px; background: var(--surface); }
 .host-note { font-size: 0.9rem; }
+html { scroll-behavior: smooth; }
+h3 { font-family: var(--display); font-weight: 400; font-size: 1.35rem; margin: 0; line-height: 1.1; }
+.hero { display: flex; flex-direction: column; gap: 16px; align-items: flex-start; }
+.hero .card { align-self: stretch; }
+.hero a.btn { text-decoration: none; }
+.menu { display: flex; flex-direction: column; gap: 16px; }
+.count { font-weight: 700; margin-top: 6px; }
+.needs { padding: 12px 16px; border-radius: 14px; background: var(--warn); border: 2px solid var(--line); font-weight: 700; }
+.card.quiet { background: transparent; border-style: dashed; }
+.dish .by { font-size: 0.95rem; }
+.empty { padding: 12px 16px; border: 2px dashed var(--line); border-radius: 16px; color: var(--muted); }
+#add { scroll-margin-top: 16px; }
 .row2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .targets { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
 /* Phones: slightly smaller type and padding, full-width buttons that are easy to tap. */
@@ -128,14 +140,15 @@ input[type=text], input[type=password], textarea {
   form { gap: 18px; }
   .row2 { grid-template-columns: 1fr; }
   .targets { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .btn.primary:not(.small) { width: 100%; }
+  .btn.primary:not(.small), #export { width: 100%; }
+  .hero { align-items: stretch; }
   .btn-row > .btn { flex: 1 1 auto; }
   .opt span { padding: 8px 16px; }
   .dish { padding: 12px 14px; }
   .dish > .btn { width: 100%; }
   .chip { min-height: 40px; padding: 4px 14px; }
 }
-@media (prefers-reduced-motion: reduce) { .bar > div { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .bar > div { transition: none; } html { scroll-behavior: auto; } }
 </style>
 </head>
 <body>
@@ -158,65 +171,56 @@ input[type=text], input[type=password], textarea {
   </section>
 
   <div id="main" style="display:flex;flex-direction:column;gap:32px">
-  <header style="display:flex;flex-direction:column;gap:20px">
-    <h1 id="title">Bring a dish. Bring a friend.</h1>
+  <header class="hero">
+    <h1 id="title">Potluck dinner</h1>
     <div class="card details" id="details" aria-live="polite">
-      <div class="state" id="no-details" hidden>The host has not added the date and place yet.</div>
+      <div class="state" id="no-details" hidden>The date and place will be added soon.</div>
     </div>
+    <a class="btn primary" href="#add">Add my dish</a>
   </header>
 
-  <section class="card" aria-labelledby="status-h">
-    <h2 id="status-h">What we have so far</h2>
-    <div class="progress-row">
-      <div id="count-line" style="font-weight:700">Loading the list&hellip;</div>
-      <div class="bar" role="img" aria-label="Progress"><div id="bar-fill" style="width:0%"></div></div>
-    </div>
+  <section class="menu" aria-labelledby="list-h">
     <div>
-      <div style="font-weight:700;margin-bottom:10px">Still needed</div>
-      <div class="chips" id="gaps"></div>
+      <h2 id="list-h">What's on the menu</h2>
+      <p id="count-line" class="count">Loading the menu&hellip;</p>
     </div>
+    <div id="list"></div>
   </section>
 
   <section class="card" aria-labelledby="add-h" id="add">
     <h2 id="add-h">Add my dish</h2>
+    <p class="needs" id="needs" hidden><span id="gaps"></span></p>
     <form id="form" autocomplete="off">
       <label class="field" for="f-name">Your name
         <input type="text" id="f-name" maxlength="60" required>
       </label>
-      <label class="field" for="f-dish">What are you bringing?
+      <label class="field" for="f-dish">What are you bringing? (food or drink)
         <input type="text" id="f-dish" maxlength="80" required>
       </label>
       <fieldset>
-        <legend>Which course is it?</legend>
+        <legend>What kind is it?</legend>
         <div class="opts" id="cat-opts"></div>
       </fieldset>
       <fieldset>
-        <legend>Does it contain or suit any of these? (tick all that apply)</legend>
+        <legend>Is it any of these? (optional)</legend>
         <div class="opts" id="tag-opts"></div>
       </fieldset>
-      <label class="field" for="f-notes">Anything else people should know? (optional)
-        <input type="text" id="f-notes" maxlength="120">
+      <label class="field" for="f-notes">Anything else? (optional)
+        <input type="text" id="f-notes" maxlength="120" placeholder="e.g. needs reheating">
       </label>
       <div class="msg" id="form-msg" role="status" aria-live="polite"></div>
       <button class="btn primary" type="submit" id="submit">Add my dish</button>
     </form>
   </section>
 
-  <section style="display:flex;flex-direction:column;gap:20px" aria-labelledby="list-h">
-    <h2 id="list-h">Who is bringing what</h2>
-    <div id="list"></div>
-  </section>
-
-  <section class="card" aria-labelledby="exp-h">
-    <h2 id="exp-h">Get the list in Excel</h2>
-    <p class="muted">Downloads a workbook with the full dish list and a count for each course.</p>
-    <div><button class="btn primary" type="button" id="export" disabled>Download Excel file</button></div>
-    <div class="msg" id="export-msg" role="status" aria-live="polite"></div>
-  </section>
-
-  <section class="card" id="host" aria-labelledby="host-h">
-    <h2 id="host-h">Host login</h2>
-    <p class="host-note muted" id="host-note">Only for the person running the potluck. Enter the host passcode to change the event details.</p>
+  <section class="card quiet" id="host" aria-labelledby="org-h">
+    <h2 id="org-h">For the organiser</h2>
+    <div>
+      <button class="btn" type="button" id="export" disabled>Download the list (Excel)</button>
+      <div class="msg" id="export-msg" role="status" aria-live="polite"></div>
+    </div>
+    <h3 id="host-h">Host login</h3>
+    <p class="host-note muted" id="host-note">Enter the host passcode to change the event details or remove a dish.</p>
 
     <form id="login-form">
       <label class="field" for="h-pass">Host passcode
@@ -410,8 +414,8 @@ input[type=text], input[type=password], textarea {
 
   function renderEvent() {
     var e = state.event || {};
-    $('title').textContent = e.title || 'Bring a dish. Bring a friend.';
-    document.title = e.title || 'Potluck Board';
+    $('title').textContent = e.title || 'Potluck dinner';
+    document.title = e.title || 'Potluck dinner';
     var box = $('details');
     Array.prototype.slice.call(box.querySelectorAll('.detail')).forEach(function (n) { n.remove(); });
     var has = false;
@@ -434,27 +438,26 @@ input[type=text], input[type=password], textarea {
   }
 
   function renderStatus() {
-    var t = targets(), total = 0, have = 0;
+    var t = targets();
     var counts = {};
     CATS.forEach(function (c) { counts[c] = 0; });
     state.dishes.forEach(function (d) { if (counts[d.category] !== undefined) counts[d.category]++; });
-    CATS.forEach(function (c) { total += t[c]; have += Math.min(counts[c], t[c]); });
     if (!state.ready) {
       // keep whatever loading or error message is showing
     } else if (state.dishes.length === 0) {
-      $('count-line').textContent = 'No dishes yet. Be the first to add one.';
+      $('count-line').textContent = 'Nothing yet. Be the first to add a dish!';
     } else {
       $('count-line').textContent = state.dishes.length + (state.dishes.length === 1 ? ' dish' : ' dishes') + ' so far';
     }
-    $('bar-fill').style.width = (total ? Math.round(have / total * 100) : 0) + '%';
-    var gaps = $('gaps');
-    gaps.textContent = '';
-    var any = false;
+    var parts = [];
     CATS.forEach(function (c) {
       var need = t[c] - counts[c];
-      if (need > 0) { any = true; gaps.appendChild(el('span', { class: 'chip', text: c + ': ' + need + ' more' })); }
+      if (need > 0) parts.push(need + ' ' + c.toLowerCase());
     });
-    if (!any && state.ready) gaps.appendChild(el('span', { class: 'chip done', text: 'Every course is covered' }));
+    $('gaps').textContent = parts.length
+      ? 'We still need ' + parts.join(', ') + '.'
+      : 'We have enough of everything. Extra dishes are welcome!';
+    $('needs').hidden = !state.ready;
   }
 
   var pendingRemove = null;
@@ -467,41 +470,33 @@ input[type=text], input[type=password], textarea {
       var items = state.dishes.filter(function (d) { return d.category === c; });
       var g = el('div', { class: 'group' });
       g.appendChild(el('div', { class: 'group-head' }, [
-        el('h2', { text: c, style: 'font-size:1.4rem' }),
+        el('h3', { text: c }),
         el('span', { class: 'muted', text: items.length + ' of ' + t[c] })
       ]));
       items.forEach(function (d) {
         var tags = (d.tags || []).join(' · ');
         var what = el('div', { class: 'what' }, [
           el('div', { class: 'name', text: d.dish }),
-          el('div', { text: 'Brought by ' + d.name }),
+          el('div', { class: 'by', text: 'by ' + d.name }),
           tags ? el('div', { class: 'tags', text: tags }) : null,
           d.notes ? el('div', { class: 'tags', text: d.notes }) : null
         ]);
-        var btn;
-        if (pendingRemove === d.id) {
-          var buttons = el('span', { class: 'btn-row', style: 'gap:8px' }, [
-            el('button', { class: 'btn small primary', type: 'button', 'data-act': 'confirm', 'data-id': d.id, text: 'Yes, remove it' }),
-            el('button', { class: 'btn small', type: 'button', 'data-act': 'cancel', text: 'Keep it' })
-          ]);
+        // Only the logged-in host sees Remove, so guests get a clean list.
+        var btn = null;
+        if (host.pass && pendingRemove === d.id) {
           btn = el('div', { class: 'confirm' }, [
-            host.pass ? null : el('p', { class: 'tags', text: 'Only the host can remove a dish. Ask the host if you need yours taken off.' }),
-            host.pass ? null : el('label', { class: 'field', for: 'rm-pass' }, [
-              document.createTextNode('Host passcode'),
-              el('input', { type: 'password', id: 'rm-pass', maxlength: '100', autocomplete: 'current-password' })
+            el('span', { class: 'btn-row', style: 'gap:8px' }, [
+              el('button', { class: 'btn small primary', type: 'button', 'data-act': 'confirm', 'data-id': d.id, text: 'Yes, remove it' }),
+              el('button', { class: 'btn small', type: 'button', 'data-act': 'cancel', text: 'Keep it' })
             ]),
-            buttons,
             el('div', { class: 'msg', id: 'rm-msg', role: 'status', 'aria-live': 'polite' })
           ]);
-        } else {
+        } else if (host.pass) {
           btn = el('button', { class: 'btn small', type: 'button', 'data-act': 'remove', 'data-id': d.id, 'aria-label': 'Remove ' + d.dish, text: 'Remove' });
         }
         g.appendChild(el('div', { class: 'dish' }, [what, btn]));
       });
-      var open = Math.max(0, t[c] - items.length);
-      for (var i = 0; i < open; i++) {
-        g.appendChild(el('div', { class: 'empty-slot muted', text: 'Still open. Add a dish above.' }));
-      }
+      if (!items.length) g.appendChild(el('div', { class: 'empty', text: 'Nothing yet' }));
       list.appendChild(g);
     });
   }
@@ -513,7 +508,7 @@ input[type=text], input[type=password], textarea {
     $('export').disabled = !state.ready;
   }
 
-  var listStateText = 'Loading the list…';
+  var listStateText = 'Loading the menu…';
   function showLoadError() {
     $('count-line').textContent = 'The list could not be loaded. Please check your internet connection and reload the page.';
     listStateText = 'The shared list could not be reached.';
@@ -593,7 +588,7 @@ input[type=text], input[type=password], textarea {
     payload.id = lastTry.id;
     write({ action: 'add', dish: payload }).then(function () {
       lastTry = null;
-      setMsg(msg, 'Thank you, ' + name + '. Your dish is on the list.');
+      setMsg(msg, 'Thank you, ' + name + '! Your dish is now on the menu.');
       $('f-dish').value = ''; $('f-notes').value = '';
       Array.prototype.forEach.call(document.querySelectorAll('input[name=tag]'), function (i) { i.checked = false; });
     }, function (e) {
@@ -664,21 +659,23 @@ input[type=text], input[type=password], textarea {
     host.pass = pass;
     try { sessionStorage.setItem('potluck-host', pass); } catch (e) {}
     $('host-h').textContent = 'Host settings';
-    $('host-note').textContent = 'You are logged in as the host. Changes show for everyone within a few seconds.';
+    $('host-note').textContent = 'You are logged in as the host. Remove buttons now show on the menu, and changes show for everyone within a few seconds.';
     $('login-form').hidden = true;
     $('host-form').hidden = false;
     hostFilled = false;
-    if (state.ready) fillHost();
+    if (state.ready) { fillHost(); renderList(); }
   }
   function logout() {
     host.pass = '';
     try { sessionStorage.removeItem('potluck-host'); } catch (e) {}
     $('host-h').textContent = 'Host login';
-    $('host-note').textContent = 'Only for the person running the potluck. Enter the host passcode to change the event details.';
+    $('host-note').textContent = 'Enter the host passcode to change the event details or remove a dish.';
     $('login-form').hidden = false;
     $('host-form').hidden = true;
     setMsg($('host-msg'), '');
     hostFilled = false;
+    pendingRemove = null;
+    if (state.ready) renderList();
   }
 
   $('login-form').addEventListener('submit', function (ev) {
