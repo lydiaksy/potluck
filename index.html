@@ -19,29 +19,34 @@ var POTLUCK_CONFIG = {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha512-r22gChDnGvBylk90+2e/ycr3RVrDi8DIOkIGNhJlKfuyQM4tIRAI062MaV8sfjQKYVGjOBaZBOA87z+IhZE9DA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <style>
 /* Layout: one centered column, big type and big buttons. Menu first, then the forms. */
+/* Colours: tomato page, cream cards, dark forest green ink.
+   Text that sits straight on the tomato uses --on-bg (cream) so it stays readable. */
 :root {
-  --bg: #FFF3C4;
-  --surface: #FFFFFF;
-  --fg: #2B1B2E;
-  --muted: #5A4A5C;
-  --accent: #B8321C;
-  --accent-fg: #FFFFFF;
-  --ok: #CFE8B5;
-  --warn: #FFD0DE;
-  --line: #2B1B2E;
+  --bg: #C8452D;        /* tomato */
+  --surface: #F7F0DE;   /* cream cards */
+  --field: #FFFBF1;     /* text boxes, a touch lighter than the cards */
+  --fg: #1E3A2A;        /* dark forest green */
+  --muted: #4B6152;
+  --on-bg: #FBF3E0;     /* cream text on the tomato */
+  --accent: #1E3A2A;    /* main buttons */
+  --accent-fg: #FBF3E0;
+  --ok: #D5E5BD;        /* dish cards */
+  --warn: #F9D3DC;
+  --line: #1E3A2A;
+  --error: #B3261E;
   --display: 'Bagel Fat One', 'Trebuchet MS', sans-serif;
   --body: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #1F1622; --surface: #2C2030; --fg: #FBEFD0; --muted: #CDBBCB;
-    --accent: #FF8A70; --accent-fg: #2B1B2E; --ok: #35502B; --warn: #5C2E43; --line: #FBEFD0;
+    --bg: #4A1A12; --surface: #1E2B22; --field: #172119; --fg: #F2EAD3; --muted: #C2CDB9; --on-bg: #F7EDD8;
+    --accent: #F2EAD3; --accent-fg: #1E3A2A; --ok: #2E4A2E; --warn: #5C2E43; --line: #F2EAD3; --error: #FF9A80;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #1F1622; --surface: #2C2030; --fg: #FBEFD0; --muted: #CDBBCB;
-  --accent: #FF8A70; --accent-fg: #2B1B2E; --ok: #35502B; --warn: #5C2E43; --line: #FBEFD0;
+  --bg: #4A1A12; --surface: #1E2B22; --field: #172119; --fg: #F2EAD3; --muted: #C2CDB9; --on-bg: #F7EDD8;
+  --accent: #F2EAD3; --accent-fg: #1E3A2A; --ok: #2E4A2E; --warn: #5C2E43; --line: #F2EAD3; --error: #FF9A80;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -57,7 +62,12 @@ body {
 .wrap, #main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 32px; }
 #main { width: 100%; }
 h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap: balance; line-height: 1.05; }
-h1 { font-size: 2.6rem; color: var(--accent); }
+h1 { font-size: 2.6rem; color: var(--on-bg); }
+/* Things placed straight on the tomato page: the menu heading, count, group headings, footer. */
+#menu-fold .sec-head, #menu-fold .count, footer { color: var(--on-bg); }
+#menu-fold .illo { color: var(--on-bg); }
+#menu-fold > .fold-body > .bar { border-color: var(--on-bg); }
+#list > .state { border-color: var(--on-bg); color: var(--on-bg); }
 h2 { font-size: 1.7rem; }
 p { margin: 0; }
 button, input, select, textarea { font: inherit; color: inherit; }
@@ -74,7 +84,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
 
 .card { background: var(--surface); border: 2px solid var(--line); border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 18px; }
-.card.quiet { background: transparent; border-style: dashed; }
+.card.quiet { border-style: dashed; }
 .details { display: flex; flex-direction: column; gap: 10px; }
 .detail { display: flex; gap: 12px; align-items: flex-start; }
 .detail svg { flex: none; margin-top: 4px; }
@@ -127,7 +137,7 @@ label.field, fieldset { display: flex; flex-direction: column; gap: 8px; font-we
 legend { padding: 0; margin-bottom: 8px; font-weight: 700; }
 input[type=text] {
   width: 100%; min-height: 56px; padding: 12px 16px; border: 2px solid var(--line); border-radius: 14px;
-  background: var(--bg); font-weight: 400;
+  background: var(--field); font-weight: 400;
 }
 input::placeholder { color: var(--muted); opacity: 0.8; }
 .opts { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -148,7 +158,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
 .opt.has-tip:hover::after, .opt.has-tip:focus-within::after { opacity: 1; transform: none; }
 #tag-opts { padding-bottom: 8px; } /* room for the little tag under the last option */
 .msg { font-weight: 700; min-height: 1.5em; }
-.msg.err { color: var(--accent); }
+.msg.err { color: var(--error); }
 .msg:empty { min-height: 0; }
 
 .list { display: flex; flex-direction: column; gap: 12px; }
@@ -159,7 +169,8 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   margin: 0 0 10px; padding-bottom: 6px; border-bottom: 2px solid var(--line);
   font-family: var(--display); font-weight: 400; font-size: 1.45rem; line-height: 1.1;
 }
-.menu-group h3 span { font-family: var(--body); font-size: 0.9rem; font-weight: 700; color: var(--muted); }
+.menu-group h3 { color: var(--on-bg); border-color: var(--on-bg) !important; }
+.menu-group h3 span { font-family: var(--body); font-size: 0.9rem; font-weight: 700; color: var(--on-bg); opacity: 0.85; }
 .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; align-items: start; }
 .item { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; border: 2px solid var(--line); border-radius: 16px; }
 .item.dish { background: var(--ok); }
@@ -335,6 +346,39 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
           <h2 id="diet-h">Dietary needs <span class="chev" aria-hidden="true"></span></h2>
           <p class="fold-hint">Tap to open</p>
         </div>
+        <svg class="illo" viewBox="0 0 140 150" aria-hidden="true">
+          <defs><pattern id="stripes-v" width="7" height="7" patternUnits="userSpaceOnUse"><rect class="bgfill" width="7" height="7"/><rect class="ink" width="3.5" height="7"/></pattern></defs>
+          <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <!-- left friend: glasses, dark top, striped trousers, glass with a straw -->
+            <path fill="url(#stripes-v)" d="M28 82 h32 l4 54 h-13 l-7 -38 l-7 38 h-13 z"/>
+            <path class="ink" d="M20 140 q4 -6 14 -4 v4 z"/>
+            <path class="ink" d="M51 136 q10 -2 14 4 h-14 z"/>
+            <path class="ink" d="M27 84 v-30 q0 -12 17 -12 q17 0 17 12 v30 z"/>
+            <path d="M58 52 q10 4 9 16" fill="none" stroke-width="5"/>
+            <rect class="bgfill" x="62" y="56" width="9" height="13" rx="1.5"/>
+            <path d="M68 56 l3 -10" fill="none"/>
+            <ellipse class="bgfill" cx="44" cy="28" rx="10" ry="13"/>
+            <path class="ink" d="M33 24 q-3 -15 11 -15 q13 0 11 13 q-6 -6 -22 2 z"/>
+            <circle class="bgfill" cx="47" cy="27" r="3.4"/>
+            <circle class="bgfill" cx="54.5" cy="27" r="3.4"/>
+            <path d="M58 30 l7 2 l-6 2" fill="none"/>
+            <path d="M46 36 q4 2 7 -1" fill="none"/>
+            <!-- right friend: collared shirt, dark trousers, cup with a straw -->
+            <path class="ink" d="M83 82 h30 l2 54 h-12 l-6 -38 l-5 38 h-12 z"/>
+            <path class="ink" d="M76 140 q4 -6 14 -4 v4 z"/>
+            <path class="ink" d="M104 136 q10 -2 14 4 h-14 z"/>
+            <path class="bgfill" d="M82 84 v-30 q0 -12 16 -12 q16 0 16 12 v30 z"/>
+            <path d="M92 43 l6 7 l6 -7" fill="none"/>
+            <path d="M86 52 q-10 4 -9 16" fill="none" stroke-width="5"/>
+            <rect class="bgfill" x="72" y="56" width="9" height="13" rx="1.5"/>
+            <path d="M75 56 l-2 -10" fill="none"/>
+            <ellipse class="bgfill" cx="98" cy="29" rx="10" ry="12"/>
+            <path class="ink" d="M89 25 q-1 -14 12 -14 q11 0 10 12 q-4 -4 -9 -2 q-7 -3 -13 4 z"/>
+            <circle class="ink" cx="93" cy="28" r="1.5" stroke="none"/>
+            <path d="M88 31 l-7 2 l6 2" fill="none"/>
+            <path d="M92 37 q-3 2 -6 0" fill="none"/>
+          </g>
+        </svg>
       </summary>
       <div class="fold-body">
       <p>Can't eat something? Let everyone know so the cooks can plan.</p>
@@ -360,7 +404,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
       <div class="msg" id="export-msg" role="status" aria-live="polite"></div>
     </section>
 
-    <footer class="muted" id="contact" style="font-size:0.9rem"></footer>
+    <footer id="contact" style="font-size:0.9rem"></footer>
   </div>
 </div>
 
