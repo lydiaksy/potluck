@@ -30,7 +30,6 @@ var POTLUCK_CONFIG = {
   --line: #2B1B2E;
   --display: 'Bagel Fat One', 'Trebuchet MS', sans-serif;
   --body: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --scale: 1;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -46,7 +45,7 @@ var POTLUCK_CONFIG = {
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-html { font-size: calc(20px * var(--scale)); -webkit-text-size-adjust: 100%; }
+html { font-size: 20px; -webkit-text-size-adjust: 100%; }
 body {
   margin: 0; background: var(--bg); color: var(--fg);
   font-family: var(--body); font-size: 1rem; line-height: 1.5;
@@ -105,6 +104,7 @@ input[type=text], input[type=password], textarea {
 .msg { font-weight: 700; min-height: 1.5em; }
 .msg.err { color: var(--accent); }
 
+#list { display: flex; flex-direction: column; gap: 28px; }
 .group { display: flex; flex-direction: column; gap: 12px; }
 .group-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .dish { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; border: 2px solid var(--line); border-radius: 16px; background: var(--ok); }
@@ -117,7 +117,24 @@ input[type=text], input[type=password], textarea {
 .host-note { font-size: 0.9rem; }
 .row2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .targets { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
-@media (max-width: 520px) { h1 { font-size: 2.1rem; } .row2 { grid-template-columns: 1fr; } }
+/* Phones: slightly smaller type and padding, full-width buttons that are easy to tap. */
+@media (max-width: 520px) {
+  html { font-size: 18px; }
+  body { padding-block: 12px 40px; }
+  .wrap, #main { gap: 24px !important; }
+  h1 { font-size: 1.9rem; }
+  h2 { font-size: 1.45rem; }
+  .card { padding: 18px; border-radius: 20px; gap: 16px; }
+  form { gap: 18px; }
+  .row2 { grid-template-columns: 1fr; }
+  .targets { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .btn.primary:not(.small) { width: 100%; }
+  .btn-row > .btn { flex: 1 1 auto; }
+  .opt span { padding: 8px 16px; }
+  .dish { padding: 12px 14px; }
+  .dish > .btn { width: 100%; }
+  .chip { min-height: 40px; padding: 4px 14px; }
+}
 @media (prefers-reduced-motion: reduce) { .bar > div { transition: none; } }
 </style>
 </head>
@@ -126,7 +143,6 @@ input[type=text], input[type=password], textarea {
 <div class="wrap">
   <div class="topbar">
     <div class="brand">potluck.</div>
-    <button class="btn small" id="textsize" type="button" aria-pressed="false">Larger text</button>
   </div>
 
   <section class="card" id="gate" hidden aria-labelledby="gate-h">
@@ -374,22 +390,6 @@ input[type=text], input[type=password], textarea {
     if (document.hidden) clearTimeout(pollTimer);
     else load();
   });
-
-  /* ---------- text size (per-viewer convenience) ---------- */
-  var big = false;
-  try { big = localStorage.getItem('potluck-big') === '1'; } catch (e) {}
-  function applySize() {
-    document.documentElement.style.setProperty('--scale', big ? '1.2' : '1');
-    var b = $('textsize');
-    b.setAttribute('aria-pressed', big ? 'true' : 'false');
-    b.textContent = big ? 'Normal text' : 'Larger text';
-  }
-  $('textsize').addEventListener('click', function () {
-    big = !big;
-    try { localStorage.setItem('potluck-big', big ? '1' : '0'); } catch (e) {}
-    applySize();
-  });
-  applySize();
 
   /* ---------- form option buttons ---------- */
   function buildOpts(container, name, items, type) {
