@@ -187,6 +187,15 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
 .msg { font-weight: 700; min-height: 1.5em; }
 .msg.err { color: var(--error); }
 .msg:empty { min-height: 0; }
+/* Loading spinner shown on the button and under the form while a dish or note is being saved. */
+.spinner {
+  display: inline-block; width: 1.05em; height: 1.05em; flex: none; vertical-align: -0.15em; margin-right: var(--sp-1);
+  border: 3px solid currentColor; border-right-color: transparent; border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.btn.loading { cursor: progress; opacity: 1; }
+.msg.saving { display: flex; align-items: center; color: var(--fg); }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .list { display: flex; flex-direction: column; gap: var(--sp-2); }
 /* The menu fills two columns on wider screens so a long menu stays short. */
@@ -280,6 +289,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   .bar > div { animation: none; transition: none; }
   .btn.jump, .jump-arrow, #add.flash { animation: none; }
   .scroll-btn, .scroll-arrow { animation: none; }
+  .spinner { animation-duration: 2.4s; } /* still turns, just gently, so people can see it is working */
 }
 </style>
 </head>
@@ -441,6 +451,27 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   function setMsg(node, text, isErr) {
     node.className = isErr ? 'msg err' : 'msg';
     node.textContent = text || '';
+  }
+  // While something is being saved: the button shows a spinner, and a "Saving…" line with a spinner appears under the form.
+  function busy(btn, msgNode, on, btnText, msgText) {
+    if (on) {
+      btn.dataset.label = btn.textContent;
+      btn.disabled = true;
+      btn.classList.add('loading');
+      btn.textContent = '';
+      btn.appendChild(el('span', { class: 'spinner', 'aria-hidden': 'true' }));
+      btn.appendChild(document.createTextNode(btnText));
+      msgNode.className = 'msg saving';
+      msgNode.textContent = '';
+      msgNode.appendChild(el('span', { class: 'spinner small', 'aria-hidden': 'true' }));
+      msgNode.appendChild(document.createTextNode(msgText));
+    } else {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      btn.textContent = btn.dataset.label || btn.textContent;
+      // The success or error message set by the form replaces the saving line.
+      if (msgNode.classList.contains('saving') && msgNode.querySelector('.spinner')) { msgNode.className = 'msg'; msgNode.textContent = ''; }
+    }
   }
   function errText(e, fallback) {
     var code = e && e.code;
@@ -636,6 +667,9 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
     });
   }
   // Each group shows its first few dishes, with a button for the rest.
+  // "Main dish" under "Mains", "Desserts" under "Dessert" and so on count as the same word.
+  function plainWord(t) { return String(t || '').trim().toLowerCase().replace(/\s*dish(es)?$/, '').replace(/s$/, ''); }
+  function sameWord(a, b) { return plainWord(a) === plainWord(b); }
   var PER_GROUP = 4, expanded = {};
   $('list').addEventListener('click', function (ev) {
     var b = ev.target.closest('button[data-group]');
@@ -687,7 +721,9 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
       var open = !!expanded[g];
       var grid = el('div', { class: 'menu-grid' });
       (open ? items : items.slice(0, PER_GROUP)).forEach(function (d) {
-        var meta = [d.type, d.serves ? 'Serves about ' + d.serves : ''].filter(Boolean).join(' · ');
+        // The group heading already names the type, so only show it when it adds something (older free-text types).
+        var typeShown = sameWord(d.type, g) ? '' : d.type;
+        var meta = [typeShown, d.serves ? 'Serves about ' + d.serves : ''].filter(Boolean).join(' · ');
         var tags = (d.tags || []).join(' · ');
         grid.appendChild(el('div', { class: 'item dish' }, [
           el('div', { class: 'what' }, [
@@ -848,7 +884,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
     if (servesText && (isNaN(serves) || serves < 1)) { setMsg(msg, 'Please enter the number of people as a number, like 10.', true); return; }
     if (dishBusy) return;
     dishBusy = true;
-    $('submit').disabled = true;
+    busy($('submit'), $('form-msg'), true, 'Adding your dish…', 'Saving your dish to the list…');
     var payload = {
       name: name, dish: dish, type: type, serves: serves,
       tags: Array.prototype.map.call(document.querySelectorAll('input[name=tag]:checked'), function (i) { return i.value; }),
@@ -864,7 +900,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
       Array.prototype.forEach.call(document.querySelectorAll('input[name=tag]'), function (i) { i.checked = false; });
     }, function (e) {
       setMsg(msg, errText(e, 'That did not save. Please try again.'), true);
-    }).then(function () { dishBusy = false; $('submit').disabled = false; });
+    }).then(function () { dishBusy = false; busy($('submit'), $('form-msg'), false); });
   });
 
   var dietTry = {}, dietBusy = false;
@@ -876,7 +912,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
     if (!name || !needs) { setMsg(msg, 'Please fill in your name and what the cooks should know.', true); return; }
     if (dietBusy) return;
     dietBusy = true;
-    $('diet-submit').disabled = true;
+    busy($('diet-submit'), $('diet-msg'), true, 'Adding…', 'Saving to the list…');
     var payload = { name: name, needs: needs };
     var t = attemptFor(dietTry, payload);
     payload.id = t.id; payload.key = t.key;
@@ -887,7 +923,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
       $('d-needs').value = '';
     }, function (e) {
       setMsg(msg, errText(e, 'That did not save. Please try again.'), true);
-    }).then(function () { dietBusy = false; $('diet-submit').disabled = false; });
+    }).then(function () { dietBusy = false; busy($('diet-submit'), $('diet-msg'), false); });
   });
 
   /* ---------- Excel export ---------- */
