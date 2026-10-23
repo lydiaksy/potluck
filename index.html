@@ -9,7 +9,8 @@
 /* ===== Settings: the Apps Script web app address (ends in /exec). ===== */
 var POTLUCK_CONFIG = {
   apiUrl: 'https://script.google.com/macros/s/AKfycbx79Bqane_blpkFxYWj3SPx0tXHfyrh3nApTAiiEFKDoJjFU7HW96qJ2OcpS-CQPGuo/exec',
-  refreshSeconds: 12
+  refreshSeconds: 12,
+  dishGoal: 20 // the menu bar is full at this many dishes
 };
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -85,6 +86,17 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .hero .card { align-self: stretch; }
 .section { display: flex; flex-direction: column; gap: 16px; }
 .count { font-weight: 700; margin-top: 6px; }
+/* Dishes bar: grows smoothly as dishes are added, with gently moving stripes. */
+.bar { height: 22px; margin-top: 10px; border: 2px solid var(--line); border-radius: 999px; background: var(--surface); overflow: hidden; }
+.bar > div {
+  height: 100%; width: 0; background-color: var(--ok);
+  background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.45) 0 10px, transparent 10px 20px);
+  background-size: 28.28px 28.28px;
+  animation: bar-stripes 1.2s linear infinite;
+  transition: width 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.bar > div.some { border-right: 2px solid var(--line); }
+@keyframes bar-stripes { to { background-position: 28.28px 0; } }
 
 form { display: flex; flex-direction: column; gap: 22px; }
 label.field, fieldset { display: flex; flex-direction: column; gap: 8px; font-weight: 700; margin: 0; padding: 0; border: 0; min-width: 0; }
@@ -132,7 +144,10 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   .item { padding: 12px 14px; }
   .item > .btn { width: 100%; }
 }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .bar > div { animation: none; transition: none; }
+}
 </style>
 </head>
 <body>
@@ -165,6 +180,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
       <div>
         <h2 id="menu-h">What's on the menu</h2>
         <p id="count-line" class="count">Loading the menu&hellip;</p>
+        <div class="bar" id="bar" role="progressbar" aria-label="Dishes added" aria-valuemin="0" aria-valuenow="0"><div id="bar-fill"></div></div>
       </div>
       <div class="list" id="list"></div>
     </section>
@@ -178,8 +194,8 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
         <label class="field" for="f-dish">What are you bringing?
           <input type="text" id="f-dish" maxlength="80" required placeholder="e.g. Fried bee hoon">
         </label>
-        <label class="field" for="f-type">What type of food or drink is it? (optional)
-          <input type="text" id="f-type" maxlength="40" placeholder="e.g. Main dish, dessert, drink">
+        <label class="field" for="f-type">What type of food or drink is it?
+          <input type="text" id="f-type" maxlength="40" required placeholder="e.g. Main dish, dessert, drink">
         </label>
         <label class="field" for="f-serves">About how many people will it serve? (optional)
           <input type="text" id="f-serves" maxlength="3" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 10">
@@ -416,6 +432,12 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
     $('count-line').textContent = n === 0
       ? 'Nothing yet. Be the first to add a dish!'
       : n + (n === 1 ? ' dish' : ' dishes') + ' so far' + (servings ? ' · about ' + servings + ' servings' : '');
+    var goal = Math.max(1, Number(CONFIG.dishGoal) || 20);
+    var fill = $('bar-fill');
+    fill.style.width = Math.min(100, n / goal * 100) + '%';
+    fill.className = n ? 'some' : '';
+    $('bar').setAttribute('aria-valuemax', String(goal));
+    $('bar').setAttribute('aria-valuenow', String(Math.min(n, goal)));
 
     // Similar types sit together; entries without a type go last.
     state.dishes.slice().sort(function (a, b) {
@@ -533,8 +555,8 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
     ev.preventDefault();
     var msg = $('form-msg');
     setMsg(msg, '');
-    var name = $('f-name').value.trim(), dish = $('f-dish').value.trim();
-    if (!name || !dish) { setMsg(msg, 'Please fill in your name and what you are bringing.', true); return; }
+    var name = $('f-name').value.trim(), dish = $('f-dish').value.trim(), type = $('f-type').value.trim();
+    if (!name || !dish || !type) { setMsg(msg, 'Please fill in your name, what you are bringing and what type it is.', true); return; }
     var servesText = $('f-serves').value.trim();
     var serves = servesText ? parseInt(servesText, 10) : null;
     if (servesText && (isNaN(serves) || serves < 1)) { setMsg(msg, 'Please enter the number of people as a number, like 10.', true); return; }
@@ -542,7 +564,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
     dishBusy = true;
     $('submit').disabled = true;
     var payload = {
-      name: name, dish: dish, type: $('f-type').value.trim(), serves: serves,
+      name: name, dish: dish, type: type, serves: serves,
       tags: Array.prototype.map.call(document.querySelectorAll('input[name=tag]:checked'), function (i) { return i.value; }),
       notes: $('f-notes').value.trim()
     };
