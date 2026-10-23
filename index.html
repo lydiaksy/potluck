@@ -420,7 +420,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   var API_URL = String(CONFIG.apiUrl || '').trim();
   var CONNECTED = /^https?:\/\//.test(API_URL);
   var REFRESH_MS = (Number(CONFIG.refreshSeconds) || 12) * 1000;
-  var TAGS = ['Vegetarian', 'Vegan', 'Gluten-free', 'Contains nuts', 'Contains dairy', 'Contains carmine/natural red dye'];
+  var TAGS = ['Vegetarian', 'Contains beef', 'Contains prawns', 'Contains nuts', 'Contains dairy', 'Contains carmine/natural red dye'];
 
   var state = { dishes: [], diets: [], event: {}, ready: false };
   var $ = function (id) { return document.getElementById(id); };
