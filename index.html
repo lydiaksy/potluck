@@ -196,6 +196,14 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
 .btn.loading { cursor: progress; opacity: 1; }
 .msg.saving { display: flex; align-items: center; color: var(--fg); }
 @keyframes spin { to { transform: rotate(360deg); } }
+/* Success: green button with a tick, a confetti burst, and a message that pops in. */
+.btn.done { background: #3F7A3F; border-color: #3F7A3F; color: #fff; animation: pop 0.5s cubic-bezier(0.2, 1.6, 0.4, 1); }
+.msg.ok { display: flex; align-items: center; gap: var(--sp-1); animation: slide-in 0.4s ease-out; }
+.tick { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 1.5em; height: 1.5em; border-radius: 50%; background: var(--ok); border: 2px solid var(--line); animation: pop 0.5s cubic-bezier(0.2, 1.6, 0.4, 1); }
+.confetti { position: fixed; z-index: 50; width: 9px; height: 14px; border-radius: 2px; pointer-events: none; animation: burst 1s ease-out forwards; }
+@keyframes pop { 0% { transform: scale(0.8); } 60% { transform: scale(1.08); } 100% { transform: scale(1); } }
+@keyframes slide-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes burst { 0% { transform: translate(0, 0) rotate(0); opacity: 1; } 100% { transform: translate(var(--dx), calc(var(--dy) + 60px)) rotate(var(--rot)); opacity: 0; } }
 
 .list { display: flex; flex-direction: column; gap: var(--sp-2); }
 /* The menu fills two columns on wider screens so a long menu stays short. */
@@ -217,7 +225,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
 .item .small { font-size: 0.85rem; overflow-wrap: anywhere; }
 .item .confirm { flex: 1 1 100%; display: flex; flex-direction: column; gap: var(--sp-1); }
 .empty, .state { padding: var(--item-pad); border: 2px dashed var(--line); border-radius: 16px; color: var(--muted); }
-#add, #diet { scroll-margin-top: var(--sp-3); }
+#add, #diet, #diet-add { scroll-margin-top: var(--sp-3); }
 /* Top "Add my dish" button: a gentle hop every few seconds and a bobbing arrow. */
 .btn.jump { animation: jump-hop 3.4s ease-in-out infinite; transition: transform 0.15s, box-shadow 0.15s; }
 .btn.jump:hover { animation-play-state: paused; transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--line); }
@@ -287,7 +295,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .bar > div { animation: none; transition: none; }
-  .btn.jump, .jump-arrow, #add.flash { animation: none; }
+  .btn.jump, .jump-arrow, #add.flash, .btn.done, .tick, .msg.ok { animation: none; }
   .scroll-btn, .scroll-arrow { animation: none; }
   .spinner { animation-duration: 2.4s; } /* still turns, just gently, so people can see it is working */
 }
@@ -337,6 +345,15 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
       </div>
     </section>
 
+    <section class="card" id="diet" aria-labelledby="diet-h">
+      <div class="sec-head">
+        <div class="sec-title"><h2 id="diet-h">Dietary needs</h2></div>
+        <img class="illo art" src="assets/add%20my%20dish.svg?v=1650" alt="" width="104" height="76" onerror="this.remove()">
+      </div>
+      <p>Can't eat something? Let everyone know so the cooks can plan.</p>
+      <div class="list" id="diet-list"></div>
+    </section>
+
     <section class="card" id="add" aria-labelledby="add-h">
       <details class="fold" id="add-fold" open>
       <summary class="sec-head">
@@ -347,7 +364,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
         <img class="illo art" src="assets/dietry%20needs.svg?v=1650" alt="" width="104" height="76" onerror="this.remove()">
       </summary>
       <div class="fold-body">
-      <form id="form" autocomplete="off">
+      <form id="form" autocomplete="off" novalidate>
         <label class="field" for="f-name">Your name
           <input type="text" id="f-name" maxlength="60" required>
         </label>
@@ -364,9 +381,6 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
             <option>Others</option>
           </select>
         </label>
-        <label class="field" for="f-serves">About how many people will it serve? (optional)
-          <input type="text" id="f-serves" maxlength="3" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 10">
-        </label>
         <fieldset>
           <legend>Is it any of these? (optional)</legend>
           <div class="opts" id="tag-opts"></div>
@@ -381,23 +395,20 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
       </details>
     </section>
 
-    <section class="card" id="diet" aria-labelledby="diet-h">
+    <section class="card" id="diet-add" aria-labelledby="diet-add-h">
       <details class="fold" id="diet-fold" open>
       <summary class="sec-head">
         <div class="sec-title">
-          <h2 id="diet-h">Dietary needs <span class="chev" aria-hidden="true"></span></h2>
+          <h2 id="diet-add-h">Add dietary restrictions <span class="chev" aria-hidden="true"></span></h2>
           <p class="fold-hint">Tap to open</p>
         </div>
-        <img class="illo art" src="assets/add%20my%20dish.svg?v=1650" alt="" width="104" height="76" onerror="this.remove()">
       </summary>
       <div class="fold-body">
-      <p>Can't eat something? Let everyone know so the cooks can plan.</p>
-      <div class="list" id="diet-list"></div>
-      <form id="diet-form" autocomplete="off">
+      <form id="diet-form" autocomplete="off" novalidate>
         <label class="field" for="d-name">Your name
           <input type="text" id="d-name" maxlength="60" required>
         </label>
-        <label class="field" for="d-needs">What should the cooks know?
+        <label class="field" for="d-needs">Dietary restrictions
           <input type="text" id="d-needs" maxlength="160" required placeholder="e.g. No beef, nut allergy, vegetarian">
         </label>
         <div class="msg" id="diet-msg" role="status" aria-live="polite"></div>
@@ -448,9 +459,30 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
     (kids || []).forEach(function (c) { if (c) n.appendChild(c); });
     return n;
   }
-  function setMsg(node, text, isErr) {
-    node.className = isErr ? 'msg err' : 'msg';
-    node.textContent = text || '';
+  function setMsg(node, text, isErr, ok) {
+    node.className = isErr ? 'msg err' : ok ? 'msg ok' : 'msg';
+    node.textContent = '';
+    if (ok) node.appendChild(el('span', { class: 'tick', 'aria-hidden': 'true', text: '\u2713' }));
+    node.appendChild(document.createTextNode(text || ''));
+  }
+  // Success: the button turns green with a tick and a little burst of confetti.
+  function celebrate(btn) {
+    var old = btn.dataset.label || btn.textContent;
+    btn.classList.add('done');
+    btn.textContent = '\u2713 Added!';
+    var r = btn.getBoundingClientRect(), colors = ['#C2402A', '#D5E5BD', '#F9D3DC', '#E8B84A', '#1E3A2A'];
+    var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    for (var i = 0; !still && i < 22; i++) {
+      var ang = Math.random() * Math.PI * 2, dist = 70 + Math.random() * 90;
+      var c = el('span', { class: 'confetti', 'aria-hidden': 'true' });
+      c.style.left = (r.left + r.width / 2) + 'px'; c.style.top = (r.top + r.height / 2) + 'px';
+      c.style.background = colors[i % colors.length];
+      c.style.setProperty('--dx', Math.cos(ang) * dist + 'px'); c.style.setProperty('--dy', (Math.sin(ang) * dist - 40) + 'px');
+      c.style.setProperty('--rot', Math.round(Math.random() * 540) + 'deg');
+      document.body.appendChild(c);
+      setTimeout(function (n) { n.remove(); }, 1100, c);
+    }
+    setTimeout(function () { btn.classList.remove('done'); btn.textContent = old; }, 1800);
   }
   // While something is being saved: the button shows a spinner, and a "Saving…" line with a spinner appears under the form.
   function busy(btn, msgNode, on, btnText, msgText) {
@@ -771,6 +803,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   function renderAll() {
     renderEvent(); renderMenu(); renderDiets();
     $('export').disabled = !state.ready;
+    if (typeof updateScrollBtn === 'function') updateScrollBtn();
   }
 
   function showLoadError() {
@@ -872,21 +905,18 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
     return slot.last;
   }
 
-  var dishTry = {}, dishBusy = false;
+  var dishTry = {}, dishBusy = false, dishOk = false, dietOk = false;
   $('form').addEventListener('submit', function (ev) {
     ev.preventDefault();
     var msg = $('form-msg');
     setMsg(msg, '');
     var name = $('f-name').value.trim(), dish = $('f-dish').value.trim(), type = $('f-type').value.trim();
     if (!name || !dish || !type) { setMsg(msg, 'Please fill in your name, what you are bringing and what type it is.', true); return; }
-    var servesText = $('f-serves').value.trim();
-    var serves = servesText ? parseInt(servesText, 10) : null;
-    if (servesText && (isNaN(serves) || serves < 1)) { setMsg(msg, 'Please enter the number of people as a number, like 10.', true); return; }
     if (dishBusy) return;
     dishBusy = true;
     busy($('submit'), $('form-msg'), true, 'Adding your dish…', 'Saving your dish to the list…');
     var payload = {
-      name: name, dish: dish, type: type, serves: serves,
+      name: name, dish: dish, type: type, serves: null,
       tags: Array.prototype.map.call(document.querySelectorAll('input[name=tag]:checked'), function (i) { return i.value; }),
       notes: $('f-notes').value.trim()
     };
@@ -895,12 +925,12 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
     write({ action: 'add', dish: payload }).then(function () {
       dishTry.last = null;
       rememberName(name);
-      setMsg(msg, 'Thank you, ' + name + '! Your dish is now on the menu.');
-      ['f-dish', 'f-type', 'f-serves', 'f-notes'].forEach(function (id) { $(id).value = ''; });
+      setMsg(msg, 'Thank you, ' + name + '! Your dish is now on the menu.', false, true); dishOk = true;
+      ['f-dish', 'f-type', 'f-notes'].forEach(function (id) { $(id).value = ''; });
       Array.prototype.forEach.call(document.querySelectorAll('input[name=tag]'), function (i) { i.checked = false; });
     }, function (e) {
       setMsg(msg, errText(e, 'That did not save. Please try again.'), true);
-    }).then(function () { dishBusy = false; busy($('submit'), $('form-msg'), false); });
+    }).then(function () { dishBusy = false; busy($('submit'), $('form-msg'), false); if (dishOk) { dishOk = false; celebrate($('submit')); } });
   });
 
   var dietTry = {}, dietBusy = false;
@@ -919,11 +949,11 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
     write({ action: 'addDiet', diet: payload }).then(function () {
       dietTry.last = null;
       rememberName(name);
-      setMsg(msg, 'Thank you, ' + name + '. Everyone can see this now.');
+      setMsg(msg, 'Thank you, ' + name + '. Everyone can see this now.', false, true); dietOk = true;
       $('d-needs').value = '';
     }, function (e) {
       setMsg(msg, errText(e, 'That did not save. Please try again.'), true);
-    }).then(function () { dietBusy = false; busy($('diet-submit'), $('diet-msg'), false); });
+    }).then(function () { dietBusy = false; busy($('diet-submit'), $('diet-msg'), false); if (dietOk) { dietOk = false; celebrate($('diet-submit')); } });
   });
 
   /* ---------- Excel export ---------- */
