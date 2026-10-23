@@ -253,6 +253,7 @@ body.is-loading .details .cat { transform-origin: 50% 100%; animation: cat-bob 1
 .menu-table tbody tr:nth-child(2) td { border-top: 0; } /* first dish row, right under the (hidden) heading row */
 .menu-table tbody tr.group-start:not(:nth-child(2)) td { border-top: 2px solid var(--line); }
 .menu-table tbody tr.alt td { background: color-mix(in srgb, var(--line) 5%, var(--surface)); }
+.diet-table tbody tr:first-child td { border-top: 0; }
 .menu-table .group-row { display: none; }
 .menu-table .group-row th { background: var(--tone, var(--t-other)); padding: 6px 12px; font-weight: 700; border-bottom: 1px solid color-mix(in srgb, var(--line) 30%, transparent); }
 .menu-table .num { width: 2.4em; padding-right: 0; text-align: right; color: var(--muted); font-weight: 700; }
@@ -348,6 +349,7 @@ body.is-loading .details .cat { transform-origin: 50% 100%; animation: cat-bob 1
   .menu-table .group-row { display: table-row; }
   .menu-table tbody tr.group-start td { border-top: 0 !important; } /* the heading row already separates the types */
   .menu-table .who { width: 38%; }
+  .diet-table .who { width: 1%; white-space: nowrap; } /* name only as wide as it needs, so the needs get the room */
   /* No room beside the title on phones, so the cat sits between the title and the box. */
   .title-wrap h1 { padding-right: 0; }
   .hero .details { margin-top: calc(112px * 0.73 - var(--sp-4)); }
@@ -889,18 +891,32 @@ body.is-loading .details .cat { transform-origin: 50% 100%; animation: cat-bob 1
   function renderDiets() {
     var list = $('diet-list');
     list.textContent = '';
-    if (showSkeletons()) { list.appendChild(skel('dish-skel')); return; }
+    if (showSkeletons()) {
+      list.appendChild(el('div', { class: 'menu-skel', 'aria-hidden': 'true' }, [skel('row-skel head'), skel('row-skel'), skel('row-skel')]));
+      return;
+    }
     if (!state.ready) return;
     if (!state.diets.length) { list.appendChild(el('div', { class: 'empty', text: 'No dietary needs shared yet.' })); return; }
-    state.diets.forEach(function (d) {
-      list.appendChild(el('div', { class: 'item diet' }, [
-        el('div', { class: 'what' }, [
-          el('div', { class: 'name', text: d.name }),
-          el('div', { text: d.needs })
-        ]),
-        removeControls('diet', d, d.name + "'s dietary need")
+    // Same table look as the menu: one row per person, in the order they were added.
+    var body = el('tbody');
+    state.diets.slice().sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); }).forEach(function (d, i) {
+      body.appendChild(el('tr', { class: i % 2 ? 'alt' : '' }, [
+        el('td', { class: 'num', text: String(i + 1) }),
+        el('td', { class: 'who', text: d.name }),
+        el('td', { class: 'dish' }, [
+          el('div', { text: d.needs }),
+          removeControls('diet', d, d.name + "'s dietary need")
+        ])
       ]));
     });
+    list.appendChild(el('table', { class: 'menu-table diet-table' }, [
+      el('thead', null, [el('tr', null, [
+        el('th', { class: 'num', scope: 'col', 'aria-label': 'Number', text: '#' }),
+        el('th', { scope: 'col', text: 'Name' }),
+        el('th', { scope: 'col', text: 'Dietary needs' })
+      ])]),
+      body
+    ]));
   }
 
   function renderAll() {
