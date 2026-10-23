@@ -107,6 +107,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .detail { display: flex; gap: var(--sp-2); align-items: flex-start; }
 .detail svg { flex: none; margin-top: 4px; }
 .detail b { display: block; }
+.map-link { display: block; width: fit-content; margin-top: var(--sp-1); font-weight: 700; color: var(--tomato); text-underline-offset: 3px; }
 .muted { color: var(--muted); }
 
 .hero { display: flex; flex-direction: column; gap: var(--sp-4); align-items: flex-start; }
@@ -248,9 +249,10 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   bottom: max(var(--sp-3), env(safe-area-inset-bottom, 0px));
   display: inline-flex; align-items: center; gap: var(--sp-1);
   min-height: 52px; padding: var(--sp-2) var(--sp-4);
-  border: 2px solid var(--line); border-radius: 999px;
-  background: var(--accent); color: var(--accent-fg); font: inherit; font-weight: 700; cursor: pointer;
-  box-shadow: 3px 3px 0 var(--line), 0 6px 18px rgba(0, 0, 0, 0.18);
+  border: 2px solid color-mix(in srgb, var(--line) 40%, transparent); border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 55%, transparent); color: var(--accent-fg); font: inherit; font-weight: 700; cursor: pointer;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
   animation: scroll-pulse 2.8s ease-in-out infinite;
   transition: transform 0.15s;
 }
@@ -261,13 +263,13 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
 @keyframes scroll-bob { 50% { transform: translateY(4px); } }
 @keyframes scroll-bob-up { 50% { transform: translateY(-4px); } }
 @keyframes scroll-pulse {
-  0%, 70%, 100% { box-shadow: 3px 3px 0 var(--line), 0 6px 18px rgba(0, 0, 0, 0.18), 0 0 0 0 rgba(194, 64, 42, 0.45); }
-  85% { box-shadow: 3px 3px 0 var(--line), 0 6px 18px rgba(0, 0, 0, 0.18), 0 0 0 12px rgba(194, 64, 42, 0); }
+  0%, 70%, 100% { box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15), 0 0 0 0 rgba(194, 64, 42, 0.45); }
+  85% { box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15), 0 0 0 12px rgba(194, 64, 42, 0); }
 }
 /* Room at the very bottom so the floating button never covers the last bit of the page. */
 #main { padding-bottom: 56px; }
 /* The form section glows briefly after the button brings you there. */
-#add.flash { animation: add-glow 1.6s ease-out; }
+#add.flash, #diet-add.flash { animation: add-glow 1.6s ease-out; }
 @keyframes add-glow {
   0% { box-shadow: 0 0 0 0 rgba(194, 64, 42, 0.55); }
   100% { box-shadow: 0 0 0 22px rgba(194, 64, 42, 0); }
@@ -326,7 +328,10 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
         <img class="cat" src="assets/cat%20on%20the%20title.svg?v=1650" alt="" width="118" height="86" onerror="this.remove()">
         <div class="state" id="no-details" hidden>The date and place will be added soon.</div>
       </div>
-      <button class="btn primary jump" type="button" id="jump-add">Add my dish <span class="jump-arrow" aria-hidden="true">&darr;</span></button>
+      <div class="btn-row">
+        <button class="btn primary jump" type="button" id="jump-add" data-target="add">Add my dish <span class="jump-arrow" aria-hidden="true">&darr;</span></button>
+        <button class="btn primary jump" type="button" id="jump-diet" data-target="diet-add">Add dietary restriction <span class="jump-arrow" aria-hidden="true">&darr;</span></button>
+      </div>
     </header>
 
     <section class="section" aria-labelledby="menu-h">
@@ -630,7 +635,12 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
       has = true;
       var p = el('div', { class: 'detail' });
       p.innerHTML = ICON_PIN;
-      p.appendChild(el('div', null, [el('b', { text: e.place || '' }), el('span', { text: e.address || '' })]));
+      var mapUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([e.place, e.address].filter(Boolean).join(', '));
+      p.appendChild(el('div', null, [
+        el('b', { text: e.place || '' }),
+        el('span', { text: e.address || '' }),
+        el('a', { class: 'map-link', href: mapUrl, target: '_blank', rel: 'noopener noreferrer', text: 'Open in Google Maps ↗' })
+      ]));
       box.insertBefore(p, $('no-details'));
     }
     $('no-details').hidden = has || !state.ready;
@@ -716,15 +726,18 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   });
   // The "Add my dish" button at the top glides down to the form (opening it if closed)
   // and makes the section glow for a moment so it is clear where you landed.
-  $('jump-add').addEventListener('click', function () {
-    var add = $('add');
-    $('add-fold').open = true;
+  function jumpTo(ev) {
+    var target = ev.currentTarget.getAttribute('data-target');
+    var add = $(target);
+    $(target === 'add' ? 'add-fold' : 'diet-fold').open = true;
     var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
     add.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
     add.classList.remove('flash');
     void add.offsetWidth; // restart the glow if pressed twice
     add.classList.add('flash');
-  });
+  }
+  $('jump-add').addEventListener('click', jumpTo);
+  $('jump-diet').addEventListener('click', jumpTo);
   function renderMenu() {
     var list = $('list');
     list.textContent = '';
