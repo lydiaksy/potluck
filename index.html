@@ -67,7 +67,10 @@ h1, #menu-h { color: var(--tomato); }
 .title-wrap { position: relative; align-self: stretch; }
 .title-wrap h1 { position: relative; z-index: 1; padding-right: 22%; }
 .title-wrap .cat { position: absolute; right: 0; bottom: 0.1em; width: 22%; max-width: 220px; height: auto; z-index: 0; pointer-events: none; }
-/* Table sketch next to the menu heading, in tomato red. */
+/* Your menu drawing is dark green; in dark mode flip it to a light cream so it stays visible. */
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) img.illo.table { filter: invert(1) hue-rotate(180deg); } }
+:root[data-theme="dark"] img.illo.table { filter: invert(1) hue-rotate(180deg); }
+/* Drawing next to the menu heading. */
 .illo.table { width: 170px; color: var(--tomato); }
 h1 { font-size: 2.6rem; }
 h2 { font-size: 1.7rem; }
@@ -269,37 +272,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
             <h2 id="menu-h">What's on the menu</h2>
             <p id="count-line" class="count">Loading the menu&hellip;</p>
           </div>
-          <svg class="illo table" viewBox="0 0 200 120" aria-hidden="true">
-            <g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-              <!-- left chair -->
-              <path d="M13 41 C20 34 33 35 39 40 L36 75"/>
-              <path d="M13 41 L23 77"/>
-              <path d="M21 41 L28 75 M30 39 L32 75"/>
-              <path d="M19 79 L46 76 L48 84 L21 87 Z"/>
-              <path d="M21 87 L19 112 M47 84 L49 110 M30 87 L31 106"/>
-              <!-- table top with plates, cutlery and a vase -->
-              <path d="M52 50 C50 40 70 36 100 36 C130 36 150 39 149 51 C147 62 128 65 100 64 C72 64 54 62 52 50 Z"/>
-              <path d="M62 62 L60 109 M139 61 L141 108 M84 64 L86 103 M116 64 L114 103"/>
-              <path d="M61 95 L114 81 M85 82 L140 97"/>
-              <path d="M64 48 C64 44 84 44 84 48 C84 52 64 52 64 48 Z"/>
-              <path d="M68 47 C70 43 76 42 80 46"/>
-              <path d="M116 48 C116 44 136 44 136 48 C136 52 116 52 116 48 Z"/>
-              <path d="M120 47 C122 43 129 42 132 46"/>
-              <path d="M88 55 L94 55 M108 41 L114 43 M106 57 L113 55"/>
-              <path d="M95 39 C93 33 94 28 96 24 L104 24 C106 28 107 33 105 39 Z"/>
-              <path d="M100 24 L100 5"/>
-              <path d="M100 18 C93 17 90 13 90 9 C96 10 99 13 100 17"/>
-              <path d="M100 13 C107 12 110 8 110 4 C104 5 101 8 100 12"/>
-              <path d="M100 22 C106 22 110 19 111 15 C105 15 102 18 100 21"/>
-              <path d="M100 9 C95 8 93 5 94 2"/>
-              <!-- right chair -->
-              <path d="M164 22 C170 18 181 18 186 20 L184 73"/>
-              <path d="M164 22 L166 75"/>
-              <path d="M171 23 L172 73 M178 22 L178 73"/>
-              <path d="M155 77 L188 74 L190 82 L157 85 Z"/>
-              <path d="M157 85 L155 112 M190 82 L192 110 M172 84 L172 107"/>
-            </g>
-          </svg>
+          <img class="illo table" src="assets/whats%20on%20the%20menu.svg" alt="" width="170" height="118" onerror="this.remove()">
         </div>
         <div class="fold-body">
           <div class="bar" id="bar" role="progressbar" aria-label="Dishes added" aria-valuemin="0" aria-valuenow="0"><div id="bar-fill"></div></div>
