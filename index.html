@@ -204,19 +204,70 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
 .confetti { position: fixed; z-index: 50; width: 9px; height: 14px; border-radius: 2px; pointer-events: none; animation: burst 1s ease-out forwards; }
 @keyframes pop { 0% { transform: scale(0.8); } 60% { transform: scale(1.08); } 100% { transform: scale(1); } }
 @keyframes slide-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+/* First load: shimmering placeholder cards, a spinner by "Loading the menu", and the cat bobbing.
+   When the data arrives, the real entries slide in one after another. */
+.skel {
+  border: 2px solid color-mix(in srgb, var(--line) 22%, transparent); border-radius: 16px;
+  --skel-base: color-mix(in srgb, var(--line) 9%, var(--surface));
+  background: linear-gradient(100deg, var(--skel-base) 30%, color-mix(in srgb, var(--ok) 80%, var(--surface)) 50%, var(--skel-base) 70%);
+  background-size: 300% 100%; animation: shimmer 1.5s ease-in-out infinite;
+}
+.skel.dish-skel { height: 96px; }
+.skel.head-skel { height: 1.6rem; width: 9rem; margin-bottom: var(--sp-2); border-radius: 999px; }
+.skel.line { height: 0.9em; border: 0; border-radius: 999px; }
+.detail.skel-row { align-items: center; }
+.detail.skel-row .skel-ico { width: 26px; height: 26px; flex: none; border-radius: 50%; }
+.detail.skel-row .skel-lines { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.loading-dots::after { content: ""; animation: dots 1.2s steps(4) infinite; }
+body.is-loading .details .cat { transform-origin: 50% 100%; animation: cat-bob 1.4s ease-in-out infinite; }
+.just-loaded .item, .just-loaded .detail, .just-loaded .menu-table tbody tr { animation: slide-in 0.45s ease-out backwards; animation-delay: calc(var(--i, 0) * 70ms); }
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+@keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+@keyframes cat-bob { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-6px) rotate(-3deg); } }
 @keyframes burst { 0% { transform: translate(0, 0) rotate(0); opacity: 1; } 100% { transform: translate(var(--dx), calc(var(--dy) + 60px)) rotate(var(--rot)); opacity: 0; } }
 
 .list { display: flex; flex-direction: column; gap: var(--sp-2); }
-/* The menu fills two columns on wider screens so a long menu stays short. */
-#list { display: flex; flex-direction: column; gap: var(--sp-5); }
-.menu-group h3 {
-  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
-  margin: 0 0 var(--sp-2); padding-bottom: var(--sp-1); border-bottom: 2px solid var(--line);
-  font-family: var(--display); font-weight: 400; font-size: 1.45rem; line-height: 1.1;
+/* The menu is one table, like the old Excel sheet: one row per dish, every dish showing, sorted by type.
+   Each type has its own colour, and a thicker line starts each new type. */
+:root { --head: #F4C7A8; --t-main: #F8D9B8; --t-side: #D5E5BD; --t-dessert: #F9D3DC; --t-drink: #CFE3F2; --t-other: #ECE4CF; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --head: #5A3A2A; --t-main: #6B4A2C; --t-side: #2E4A2E; --t-dessert: #5C2E43; --t-drink: #234459; --t-other: #3A3A2E; }
 }
-
-.menu-group h3 span { font-family: var(--body); font-size: 0.9rem; font-weight: 700; color: var(--muted); }
-.menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--sp-2); align-items: start; }
+:root[data-theme="dark"] { --head: #5A3A2A; --t-main: #6B4A2C; --t-side: #2E4A2E; --t-dessert: #5C2E43; --t-drink: #234459; --t-other: #3A3A2E; }
+#list { display: flex; flex-direction: column; gap: var(--sp-3); }
+.t-main { --tone: var(--t-main); } .t-side { --tone: var(--t-side); } .t-dessert { --tone: var(--t-dessert); } .t-drink { --tone: var(--t-drink); }
+.tchip {
+  display: inline-block; padding: 1px 12px; border: 2px solid var(--line); border-radius: 999px;
+  background: var(--tone, var(--t-other)); font-weight: 700; font-size: 0.85rem; line-height: 1.5; white-space: nowrap;
+}
+/* Count of each type at the top, e.g. "7 Mains". */
+.type-sum { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--sp-1); }
+.type-sum .tchip { font-size: 1rem; padding: 4px 16px; }
+.menu-table {
+  width: 100%; border-collapse: separate; border-spacing: 0;
+  border: 2px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--surface);
+}
+.menu-table { line-height: 1.35; }
+.menu-table th { background: var(--head); text-align: left; font-weight: 700; padding: 10px 12px; border-bottom: 2px solid var(--line); }
+.menu-table td { padding: 7px 12px; vertical-align: middle; border-top: 1px solid color-mix(in srgb, var(--line) 22%, transparent); }
+.menu-table tbody tr:nth-child(2) td { border-top: 0; } /* first dish row, right under the (hidden) heading row */
+.menu-table tbody tr.group-start:not(:nth-child(2)) td { border-top: 2px solid var(--line); }
+.menu-table tbody tr.alt td { background: color-mix(in srgb, var(--line) 5%, var(--surface)); }
+.menu-table .group-row { display: none; }
+.menu-table .group-row th { background: var(--tone, var(--t-other)); padding: 6px 12px; font-weight: 700; border-bottom: 1px solid color-mix(in srgb, var(--line) 30%, transparent); }
+.menu-table .num { width: 2.4em; padding-right: 0; text-align: right; color: var(--muted); font-weight: 700; }
+.menu-table .who { width: 22%; font-weight: 700; overflow-wrap: break-word; }
+.menu-table .dish { overflow-wrap: break-word; }
+.menu-table .small:not(.btn) { font-size: 0.8rem; color: var(--muted); }
+.menu-table td.notes { width: 30%; overflow-wrap: anywhere; }
+.menu-table .notes-inline { display: none; }
+.menu-table td.type, .menu-table th.type { width: 1%; white-space: nowrap; }
+.menu-table .tchip { font-size: 0.8rem; line-height: 1.3; padding: 0 10px; }
+.menu-table .dish > .btn { margin-top: var(--sp-1); }
+.menu-table .confirm { display: flex; flex-direction: column; gap: var(--sp-1); margin-top: var(--sp-1); }
+.skel.row-skel { height: 44px; }
+.skel.row-skel.head { height: 48px; background: color-mix(in srgb, var(--head) 70%, var(--surface)); }
+.menu-skel { display: flex; flex-direction: column; gap: 6px; }
 .item { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-2); flex-wrap: wrap; padding: var(--item-pad); border: 2px solid var(--line); border-radius: 16px; }
 .item.dish { background: var(--ok); }
 .item.diet { background: var(--surface); }
@@ -289,7 +340,14 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   .illo.table { width: 160px; }
   .sec-head h2 { font-size: 1.85rem; }
   .chev { width: 34px; height: 34px; }
-  .menu-grid { grid-template-columns: 1fr; }
+  /* Phones: the type moves under the dish name, so three columns fit: #, Name, Dish. */
+  .menu-table th, .menu-table td { padding: 10px; }
+  .menu-table td.type, .menu-table th.type, .menu-table td.notes, .menu-table th.notes { display: none; }
+  .menu-table .notes-inline { display: block; }
+  .menu-table td { vertical-align: top; }
+  .menu-table .group-row { display: table-row; }
+  .menu-table tbody tr.group-start td { border-top: 0 !important; } /* the heading row already separates the types */
+  .menu-table .who { width: 38%; }
   /* No room beside the title on phones, so the cat sits between the title and the box. */
   .title-wrap h1 { padding-right: 0; }
   .hero .details { margin-top: calc(112px * 0.73 - var(--sp-4)); }
@@ -299,6 +357,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   .bar > div { animation: none; transition: none; }
   .btn.jump, .jump-arrow, #add.flash, .btn.done, .tick, .msg.ok { animation: none; }
   .scroll-btn, .scroll-arrow { animation: none; }
+  .skel, body.is-loading .details .cat, .just-loaded .item, .just-loaded .detail, .just-loaded .menu-table tbody tr { animation: none; }
   .spinner { animation-duration: 2.4s; } /* still turns, just gently, so people can see it is working */
 }
 </style>
@@ -339,7 +398,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
         <div class="sec-head">
           <div class="sec-title">
             <h2 id="menu-h">What's on the menu</h2>
-            <p id="count-line" class="count">Loading the menu&hellip;</p>
+            <p id="count-line" class="count"><span class="spinner" aria-hidden="true"></span>Loading the menu<span class="loading-dots" aria-hidden="true"></span></p>
           </div>
           <img class="illo table art" src="assets/whats%20on%20the%20menu.svg?v=1650" alt="" width="170" height="118" onerror="this.remove()">
         </div>
@@ -565,9 +624,32 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
     state.dishes = d.dishes || [];
     state.diets = d.diets || [];
     state.event = d.event || {};
-    if (!state.ready) { state.ready = true; clearTimeout(failTimer); }
+    var first = !state.ready;
+    if (first) { state.ready = true; clearTimeout(failTimer); }
+    if (first) finishBoot();
     if (pending && !findEntry(pending.kind, pending.id)) pending = null;
     renderAll();
+    if (first) staggerIn();
+  }
+
+  /* ---------- first-load animation ---------- */
+  // booting: the first load is under way, so show shimmering placeholders instead of empty boxes.
+  var booting = false, loadFailed = false, settleTimer = null;
+  function startBoot() { booting = true; document.body.classList.add('is-loading'); }
+  function finishBoot() { booting = false; document.body.classList.remove('is-loading'); }
+  function showSkeletons() { return booting && !loadFailed && !state.ready; }
+  function skel(cls) { return el('div', { class: 'skel ' + (cls || ''), 'aria-hidden': 'true' }); }
+  // Once the data arrives, the entries slide in one after another.
+  function staggerIn() {
+    var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (still) return;
+    var main = $('main');
+    Array.prototype.forEach.call(main.querySelectorAll('.detail, .menu-table tbody tr, .item'), function (n, i) {
+      n.style.setProperty('--i', Math.min(i, 14));
+    });
+    main.classList.add('just-loaded');
+    clearTimeout(settleTimer);
+    settleTimer = setTimeout(function () { main.classList.remove('just-loaded'); }, 1800);
   }
 
   function load() {
@@ -624,6 +706,14 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
     var box = $('details');
     Array.prototype.slice.call(box.querySelectorAll('.detail')).forEach(function (n) { n.remove(); });
     var has = false;
+    if (showSkeletons()) {
+      // Two placeholder rows where the date and the place will appear.
+      [['60%', '35%'], ['45%', '80%']].forEach(function (w) {
+        var lines = el('div', { class: 'skel-lines' }, [skel('line'), skel('line')]);
+        lines.children[0].style.width = w[0]; lines.children[1].style.width = w[1];
+        box.insertBefore(el('div', { class: 'detail skel-row', 'aria-hidden': 'true' }, [skel('skel-ico'), lines]), $('no-details'));
+      });
+    }
     if (e.date || e.time) {
       has = true;
       var d = el('div', { class: 'detail' });
@@ -708,22 +798,8 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
       return ia - ib || a.toLowerCase().localeCompare(b.toLowerCase());
     });
   }
-  // Each group shows its first few dishes, with a button for the rest.
-  // "Main dish" under "Mains", "Desserts" under "Dessert" and so on count as the same word.
-  function plainWord(t) { return String(t || '').trim().toLowerCase().replace(/\s*dish(es)?$/, '').replace(/s$/, ''); }
-  function sameWord(a, b) { return plainWord(a) === plainWord(b); }
-  var PER_GROUP = 4, expanded = {};
-  $('list').addEventListener('click', function (ev) {
-    var b = ev.target.closest('button[data-group]');
-    if (!b) return;
-    var g = b.getAttribute('data-group');
-    expanded[g] = !expanded[g];
-    renderMenu();
-    if (!expanded[g]) {
-      var head = Array.prototype.filter.call(document.querySelectorAll('#list .menu-group h3'), function (h) { return h.firstChild.nodeValue === g; })[0];
-      if (head) head.scrollIntoView({ block: 'start' });
-    }
-  });
+  // Colour for each type (matches the .t-* classes); anything else gets the plain colour.
+  var TONE = { Mains: 't-main', Sides: 't-side', Desserts: 't-dessert', Drinks: 't-drink' };
   // The "Add my dish" button at the top glides down to the form (opening it if closed)
   // and makes the section glow for a moment so it is clear where you landed.
   function jumpTo(ev) {
@@ -741,6 +817,11 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   function renderMenu() {
     var list = $('list');
     list.textContent = '';
+    if (showSkeletons()) {
+      list.appendChild(el('div', { class: 'menu-skel', 'aria-hidden': 'true' },
+        [skel('row-skel head'), skel('row-skel'), skel('row-skel'), skel('row-skel'), skel('row-skel'), skel('row-skel')]));
+      return;
+    }
     if (!state.ready) { list.appendChild(el('div', { class: 'state', text: listStateText })); return; }
 
     var n = state.dishes.length, servings = 0;
@@ -761,45 +842,54 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
       var g = groupFor(d);
       (groups[g] = groups[g] || []).push(d);
     });
-    groupOrder(Object.keys(groups)).forEach(function (g) {
-      var items = groups[g].sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
-      var open = !!expanded[g];
-      var grid = el('div', { class: 'menu-grid' });
-      (open ? items : items.slice(0, PER_GROUP)).forEach(function (d) {
-        // The group heading already names the type, so only show it when it adds something (older free-text types).
-        var typeShown = sameWord(d.type, g) ? '' : d.type;
-        var meta = [typeShown, d.serves ? 'Serves about ' + d.serves : ''].filter(Boolean).join(' · ');
-        var tags = (d.tags || []).join(' · ');
-        grid.appendChild(el('div', { class: 'item dish' }, [
-          el('div', { class: 'what' }, [
-            el('div', { class: 'name', text: d.dish }),
-            meta ? el('div', { class: 'meta', text: meta }) : null,
-            el('div', { text: 'by ' + d.name }),
-            tags ? el('div', { class: 'small', text: tags }) : null,
-            d.notes ? el('div', { class: 'small', text: d.notes }) : null
+    if (!n) return;
+    var order = groupOrder(Object.keys(groups));
+
+    // How many of each type, e.g. "7 Mains · 5 Sides", so gaps are easy to spot.
+    list.appendChild(el('ul', { class: 'type-sum', 'aria-label': 'Dishes by type' }, order.map(function (g) {
+      return el('li', { class: 'tchip ' + (TONE[g] || ''), text: groups[g].length + ' ' + g });
+    })));
+
+    // One table, like the old Excel sheet: every dish on its own row, sorted by type, then by when it was added.
+    var body = el('tbody'), row = 0;
+    order.forEach(function (g) {
+      var tone = TONE[g] || '';
+      // Phones have no Type column, so each type gets a coloured heading row instead.
+      body.appendChild(el('tr', { class: 'group-row ' + tone }, [
+        el('th', { colspan: '5', scope: 'rowgroup', text: g + ' · ' + groups[g].length })
+      ]));
+      groups[g].sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); }).forEach(function (d, i) {
+        var type = d.type || g;
+        var extra = (d.tags || []).concat(d.notes ? [d.notes] : []).join(' · ');
+        body.appendChild(el('tr', { class: (i === 0 ? 'group-start' : '') + (row % 2 ? ' alt' : '') }, [
+          el('td', { class: 'num', text: String(++row) }),
+          el('td', { class: 'who', text: d.name }),
+          el('td', { class: 'dish' }, [
+            el('div', { text: d.dish }),
+            extra ? el('div', { class: 'small notes-inline', text: extra }) : null, // phones only
+            removeControls('dish', d, d.dish)
           ]),
-          removeControls('dish', d, d.dish)
+          el('td', { class: 'type' }, [el('span', { class: 'tchip ' + tone, text: type })]),
+          el('td', { class: 'notes small', text: extra })
         ]));
       });
-      var extra = items.length - PER_GROUP;
-      list.appendChild(el('div', { class: 'menu-group' }, [
-        el('h3', null, [
-          document.createTextNode(g),
-          el('span', { text: items.length + (items.length === 1 ? ' dish' : ' dishes') })
-        ]),
-        grid,
-        extra > 0 ? el('button', {
-          class: 'btn small', type: 'button', 'data-group': g, style: 'margin-top:12px',
-          'aria-expanded': open ? 'true' : 'false',
-          text: open ? 'Show fewer' : 'Show ' + extra + ' more ' + g.toLowerCase()
-        }) : null
-      ]));
     });
+    list.appendChild(el('table', { class: 'menu-table' }, [
+      el('thead', null, [el('tr', null, [
+        el('th', { class: 'num', scope: 'col', 'aria-label': 'Number', text: '#' }),
+        el('th', { scope: 'col', text: 'Name' }),
+        el('th', { scope: 'col', text: 'Dish' }),
+        el('th', { class: 'type', scope: 'col', text: 'Type' }),
+        el('th', { class: 'notes', scope: 'col', text: 'Notes' })
+      ])]),
+      body
+    ]));
   }
 
   function renderDiets() {
     var list = $('diet-list');
     list.textContent = '';
+    if (showSkeletons()) { list.appendChild(skel('dish-skel')); return; }
     if (!state.ready) return;
     if (!state.diets.length) { list.appendChild(el('div', { class: 'empty', text: 'No dietary needs shared yet.' })); return; }
     state.diets.forEach(function (d) {
@@ -820,9 +910,10 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   }
 
   function showLoadError() {
-    $('count-line').textContent = 'The menu could not be loaded. Please check your internet connection and reload the page.';
+    loadFailed = true; finishBoot();
     listStateText = 'The menu could not be reached.';
-    renderMenu();
+    renderAll();
+    $('count-line').textContent = 'The menu could not be loaded. Please check your internet connection and reload the page.';
   }
 
   /* ---------- removing your own entry ---------- */
@@ -1053,6 +1144,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   });
 
   /* ---------- start ---------- */
+  if (CONNECTED && access) startBoot();
   renderAll();
   if (!CONNECTED) {
     $('count-line').textContent = 'This page is not connected to its Google Sheet yet.';
@@ -1060,7 +1152,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
     showGate();
   } else {
     failTimer = setTimeout(function () {
-      if (!state.ready) $('count-line').textContent = 'The menu could not be loaded. Please check your internet connection and reload the page.';
+      if (!state.ready) showLoadError();
     }, 12000);
     load();
   }
