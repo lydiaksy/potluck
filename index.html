@@ -212,6 +212,31 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   92% { transform: translateY(0); }
 }
 @keyframes jump-arrow { 50% { transform: translateY(4px); } }
+/* Floating "Scroll down" button, bottom right. At the bottom of the page it becomes "Back to top". */
+.scroll-btn {
+  position: fixed; z-index: 10;
+  right: max(var(--sp-3), env(safe-area-inset-right, 0px));
+  bottom: max(var(--sp-3), env(safe-area-inset-bottom, 0px));
+  display: inline-flex; align-items: center; gap: var(--sp-1);
+  min-height: 52px; padding: var(--sp-2) var(--sp-4);
+  border: 2px solid var(--line); border-radius: 999px;
+  background: var(--accent); color: var(--accent-fg); font: inherit; font-weight: 700; cursor: pointer;
+  box-shadow: 3px 3px 0 var(--line), 0 6px 18px rgba(0, 0, 0, 0.18);
+  animation: scroll-pulse 2.8s ease-in-out infinite;
+  transition: transform 0.15s;
+}
+.scroll-btn:hover { transform: translateY(-2px); }
+.scroll-btn:active { transform: translateY(1px); }
+.scroll-arrow { display: inline-block; font-size: 1.15em; line-height: 1; animation: scroll-bob 1.2s ease-in-out infinite; }
+.scroll-btn.up .scroll-arrow { animation-name: scroll-bob-up; }
+@keyframes scroll-bob { 50% { transform: translateY(4px); } }
+@keyframes scroll-bob-up { 50% { transform: translateY(-4px); } }
+@keyframes scroll-pulse {
+  0%, 70%, 100% { box-shadow: 3px 3px 0 var(--line), 0 6px 18px rgba(0, 0, 0, 0.18), 0 0 0 0 rgba(194, 64, 42, 0.45); }
+  85% { box-shadow: 3px 3px 0 var(--line), 0 6px 18px rgba(0, 0, 0, 0.18), 0 0 0 12px rgba(194, 64, 42, 0); }
+}
+/* Room at the very bottom so the floating button never covers the last bit of the page. */
+#main { padding-bottom: 56px; }
 /* The form section glows briefly after the button brings you there. */
 #add.flash { animation: add-glow 1.6s ease-out; }
 @keyframes add-glow {
@@ -239,6 +264,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   html { scroll-behavior: auto; }
   .bar > div { animation: none; transition: none; }
   .btn.jump, .jump-arrow, #add.flash { animation: none; }
+  .scroll-btn, .scroll-arrow { animation: none; }
 }
 </style>
 </head>
@@ -357,6 +383,10 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
     </section>
 
     <footer id="contact" style="font-size:0.9rem"></footer>
+
+    <button class="scroll-btn" type="button" id="scroll-btn" aria-label="Scroll down the page">
+      <span class="scroll-label">Scroll down</span> <span class="scroll-arrow" aria-hidden="true">&darr;</span>
+    </button>
   </div>
 </div>
 
@@ -725,6 +755,29 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
       if (m) setMsg(m, errText(e, 'That did not work. Please try again.'), true);
     }).then(function () { removing = false; });
   }
+
+  /* ---------- floating scroll button ---------- */
+  // Each tap glides most of a screen down. Near the bottom it turns into "Back to top".
+  var scrollBtn = $('scroll-btn'), scrollTicking = false;
+  function updateScrollBtn() {
+    scrollTicking = false;
+    var atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 80;
+    scrollBtn.classList.toggle('up', atBottom);
+    scrollBtn.querySelector('.scroll-label').textContent = atBottom ? 'Back to top' : 'Scroll down';
+    scrollBtn.querySelector('.scroll-arrow').innerHTML = atBottom ? '&uarr;' : '&darr;';
+    scrollBtn.setAttribute('aria-label', atBottom ? 'Back to the top of the page' : 'Scroll down the page');
+  }
+  window.addEventListener('scroll', function () {
+    if (!scrollTicking) { scrollTicking = true; requestAnimationFrame(updateScrollBtn); }
+  }, { passive: true });
+  window.addEventListener('resize', updateScrollBtn);
+  scrollBtn.addEventListener('click', function () {
+    var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var how = still ? 'auto' : 'smooth';
+    if (scrollBtn.classList.contains('up')) window.scrollTo({ top: 0, behavior: how });
+    else window.scrollBy({ top: Math.round(window.innerHeight * 0.8), behavior: how });
+  });
+  updateScrollBtn();
 
   /* ---------- forms ---------- */
   // A little message that pops up over some options (on hover, or when tapped on a phone).
