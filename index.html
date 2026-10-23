@@ -114,13 +114,15 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
 .opt input:checked + span::before { content: "\2713\00a0"; }
 .opt input:focus-visible + span { outline: 3px solid var(--fg); outline-offset: 3px; }
 .opt.has-tip::after {
-  content: attr(data-tip); position: absolute; left: 0; bottom: calc(100% + 10px); z-index: 2;
-  padding: 6px 14px; border: 2px solid var(--line); border-radius: 999px;
+  /* Small tag tucked just under the option's right end, in the gap before the next field. */
+  content: attr(data-tip); position: absolute; right: 14px; top: calc(100% + 3px); z-index: 2;
+  padding: 0 8px; border-radius: 999px; font-size: 0.62rem; line-height: 1.5;
   background: var(--accent); color: var(--accent-fg); font-weight: 700; white-space: nowrap;
-  box-shadow: 3px 3px 0 var(--line); pointer-events: none;
-  opacity: 0; transform: translateY(6px); transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+  opacity: 0; transform: translateY(-3px); transition: opacity 0.2s, transform 0.2s;
 }
 .opt.has-tip:hover::after, .opt.has-tip:focus-within::after { opacity: 1; transform: none; }
+#tag-opts { padding-bottom: 8px; } /* room for the little tag under the last option */
 .msg { font-weight: 700; min-height: 1.5em; }
 .msg.err { color: var(--accent); }
 .msg:empty { min-height: 0; }
