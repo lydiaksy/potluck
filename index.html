@@ -19,15 +19,14 @@ var POTLUCK_CONFIG = {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha512-r22gChDnGvBylk90+2e/ycr3RVrDi8DIOkIGNhJlKfuyQM4tIRAI062MaV8sfjQKYVGjOBaZBOA87z+IhZE9DA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <style>
 /* Layout: one centered column, big type and big buttons. Menu first, then the forms. */
-/* Colours: tomato page, cream cards, dark forest green ink.
-   Text that sits straight on the tomato uses --on-bg (cream) so it stays readable. */
+/* Colours: cream page, lighter cream cards, dark forest green ink, tomato red for the big headings. */
 :root {
-  --bg: #C8452D;        /* tomato */
-  --surface: #F7F0DE;   /* cream cards */
-  --field: #FFFBF1;     /* text boxes, a touch lighter than the cards */
+  --bg: #F3EAD3;        /* cream page */
+  --surface: #FFFAEE;   /* lighter cream cards */
+  --field: #FFFDF7;     /* text boxes */
   --fg: #1E3A2A;        /* dark forest green */
   --muted: #4B6152;
-  --on-bg: #FBF3E0;     /* cream text on the tomato */
+  --tomato: #C2402A;    /* event title and "What's on the menu" */
   --accent: #1E3A2A;    /* main buttons */
   --accent-fg: #FBF3E0;
   --ok: #D5E5BD;        /* dish cards */
@@ -39,13 +38,13 @@ var POTLUCK_CONFIG = {
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #4A1A12; --surface: #1E2B22; --field: #172119; --fg: #F2EAD3; --muted: #C2CDB9; --on-bg: #F7EDD8;
+    --bg: #18211B; --surface: #22302A; --field: #1B2620; --fg: #F2EAD3; --muted: #C2CDB9; --tomato: #FF8E73;
     --accent: #F2EAD3; --accent-fg: #1E3A2A; --ok: #2E4A2E; --warn: #5C2E43; --line: #F2EAD3; --error: #FF9A80;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #4A1A12; --surface: #1E2B22; --field: #172119; --fg: #F2EAD3; --muted: #C2CDB9; --on-bg: #F7EDD8;
+  --bg: #18211B; --surface: #22302A; --field: #1B2620; --fg: #F2EAD3; --muted: #C2CDB9; --tomato: #FF8E73;
   --accent: #F2EAD3; --accent-fg: #1E3A2A; --ok: #2E4A2E; --warn: #5C2E43; --line: #F2EAD3; --error: #FF9A80;
   color-scheme: dark;
 }
@@ -62,12 +61,8 @@ body {
 .wrap, #main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 32px; }
 #main { width: 100%; }
 h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap: balance; line-height: 1.05; }
-h1 { font-size: 2.6rem; color: var(--on-bg); }
-/* Things placed straight on the tomato page: the menu heading, count, group headings, footer. */
-#menu-fold .sec-head, #menu-fold .count, footer { color: var(--on-bg); }
-#menu-fold .illo { color: var(--on-bg); }
-#menu-fold > .fold-body > .bar { border-color: var(--on-bg); }
-#list > .state { border-color: var(--on-bg); color: var(--on-bg); }
+h1, #menu-h { color: var(--tomato); }
+h1 { font-size: 2.6rem; }
 h2 { font-size: 1.7rem; }
 p { margin: 0; }
 button, input, select, textarea { font: inherit; color: inherit; }
@@ -169,8 +164,8 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   margin: 0 0 10px; padding-bottom: 6px; border-bottom: 2px solid var(--line);
   font-family: var(--display); font-weight: 400; font-size: 1.45rem; line-height: 1.1;
 }
-.menu-group h3 { color: var(--on-bg); border-color: var(--on-bg) !important; }
-.menu-group h3 span { font-family: var(--body); font-size: 0.9rem; font-weight: 700; color: var(--on-bg); opacity: 0.85; }
+
+.menu-group h3 span { font-family: var(--body); font-size: 0.9rem; font-weight: 700; color: var(--muted); }
 .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; align-items: start; }
 .item { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; border: 2px solid var(--line); border-radius: 16px; }
 .item.dish { background: var(--ok); }
