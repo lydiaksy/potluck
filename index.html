@@ -48,25 +48,37 @@ var POTLUCK_CONFIG = {
   --accent: #F2EAD3; --accent-fg: #1E3A2A; --ok: #2E4A2E; --warn: #5C2E43; --line: #F2EAD3; --error: #FF9A80;
   color-scheme: dark;
 }
+/* Spacing scale: every gap and padding uses these, so the page keeps one rhythm. */
+:root {
+  --sp-1: 8px; --sp-2: 12px; --sp-3: 16px; --sp-4: 24px; --sp-5: 32px; --sp-6: 48px;
+  --section-gap: var(--sp-6);   /* between the big sections */
+  --card-pad: 28px;             /* inside cards */
+  --item-pad: 14px 18px;        /* inside dish and dietary entries */
+  --gutter: 24px;               /* page edges */
+  --cat-w: 150px;               /* cat sitting on the date box */
+}
+@media (max-width: 520px) {
+  :root { --section-gap: var(--sp-5); --card-pad: 20px; --item-pad: 12px 16px; --gutter: 16px; --cat-w: 112px; }
+}
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html { font-size: 20px; -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 body {
   margin: 0; background: var(--bg); color: var(--fg);
   font-family: var(--body); font-size: 1rem; line-height: 1.5;
-  padding-block: 20px 64px;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: var(--sp-6) 64px;
+  padding-left: max(var(--gutter), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--gutter), env(safe-area-inset-right, 0px));
 }
-.wrap, #main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 32px; }
+.wrap, #main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--section-gap); }
 #main { width: 100%; }
 h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap: balance; line-height: 1.05; }
 h1, #menu-h { color: var(--tomato); }
-/* The cat (assets/cat on the title.svg) sits to the right of the title, level with its last line.
-   The title keeps clear of it. On phones it sits on top of the title instead. */
+/* The cat (assets/cat on the title.svg) sits on top of the date-and-place box, at its right.
+   The box moves down a little to leave room for it. */
 .title-wrap { position: relative; align-self: stretch; }
-.title-wrap h1 { position: relative; z-index: 1; padding-right: 25%; }
-.title-wrap .cat { position: absolute; right: 0; bottom: 0.1em; width: 27%; max-width: 270px; height: auto; z-index: 0; pointer-events: none; }
+.hero .details { border: 3px dotted var(--line); position: relative; margin-top: calc(var(--cat-w) * 0.73 - var(--sp-4)); }
+.details .cat { position: absolute; right: var(--card-pad); bottom: calc(100% - 3px); width: var(--cat-w); height: auto; pointer-events: none; }
 /* Your drawings (assets folder) are dark green; in dark mode flip them to a light cream so they stay visible. */
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) img.illo.art { filter: invert(1) hue-rotate(180deg); } }
 :root[data-theme="dark"] img.illo.art { filter: invert(1) hue-rotate(180deg); }
@@ -84,24 +96,24 @@ button, input, select, textarea { font: inherit; color: inherit; }
   background: var(--surface); font-weight: 700; cursor: pointer; text-decoration: none; color: inherit;
 }
 .btn.primary { background: var(--accent); color: var(--accent-fg); box-shadow: 4px 4px 0 var(--line); }
-.btn.small { min-height: 44px; padding: 8px 18px; }
+.btn.small { min-height: 44px; padding: var(--sp-1) var(--sp-4); }
 .btn[disabled] { opacity: 0.6; cursor: default; }
-.btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn-row { display: flex; gap: var(--sp-1); flex-wrap: wrap; }
 
-.card { background: var(--surface); border: 2px solid var(--line); border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+.card { background: var(--surface); border: 2px solid var(--line); border-radius: 24px; padding: var(--card-pad); display: flex; flex-direction: column; gap: var(--sp-3); }
 .card.quiet { border-style: dashed; }
-.details { display: flex; flex-direction: column; gap: 10px; }
-.detail { display: flex; gap: 12px; align-items: flex-start; }
+.details { display: flex; flex-direction: column; gap: var(--sp-2); }
+.detail { display: flex; gap: var(--sp-2); align-items: flex-start; }
 .detail svg { flex: none; margin-top: 4px; }
 .detail b { display: block; }
 .muted { color: var(--muted); }
 
-.hero { display: flex; flex-direction: column; gap: 16px; align-items: flex-start; }
+.hero { display: flex; flex-direction: column; gap: var(--sp-4); align-items: flex-start; }
 .hero .card { align-self: stretch; }
-.section { display: flex; flex-direction: column; gap: 16px; }
-.count { font-weight: 700; margin-top: 6px; }
+.section { display: flex; flex-direction: column; gap: var(--sp-3); }
+.count { font-weight: 700; margin-top: var(--sp-1); }
 /* Section headings with a small ink illustration on the right. */
-.sec-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.sec-head { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-3); }
 .sec-head h2 { font-size: 2.4rem; }
 .sec-title { min-width: 0; }
 .illo { flex: none; width: 150px; height: auto; color: var(--fg); --illo-bg: var(--bg); }
@@ -110,7 +122,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .fold > summary::-webkit-details-marker { display: none; }
 .chev {
   display: inline-flex; vertical-align: middle; position: relative; top: -0.12em;
-  width: 40px; height: 40px; margin-left: 6px; border: 2px solid var(--line); border-radius: 50%; background: var(--surface);
+  width: 40px; height: 40px; margin-left: var(--sp-1); border: 2px solid var(--line); border-radius: 50%; background: var(--surface);
 }
 .chev::before {
   content: ""; width: 10px; height: 10px; margin: auto; position: relative; top: -2px;
@@ -118,15 +130,15 @@ button, input, select, textarea { font: inherit; color: inherit; }
   transition: transform 0.2s;
 }
 .fold[open] .chev::before { transform: rotate(-135deg); top: 2px; }
-.fold-hint { display: none; font-weight: 700; color: var(--muted); margin-top: 4px; }
+.fold-hint { display: none; font-weight: 700; color: var(--muted); margin-top: var(--sp-1); }
 .fold:not([open]) .fold-hint { display: block; }
-.fold-body { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
+.fold-body { display: flex; flex-direction: column; gap: var(--sp-3); margin-top: var(--sp-4); }
 .fold-body > .bar { margin-top: 0; }
 .card .illo { --illo-bg: var(--surface); }
 .illo .ink { fill: currentColor; }
 .illo .bgfill { fill: var(--illo-bg); }
 /* Dishes bar: grows smoothly as dishes are added, with gently moving stripes. */
-.bar { height: 22px; margin-top: 10px; border: 2px solid var(--line); border-radius: 999px; background: var(--surface); overflow: hidden; }
+.bar { height: 22px; margin-top: 0; border: 2px solid var(--line); border-radius: 999px; background: var(--surface); overflow: hidden; }
 .bar > div {
   height: 100%; width: 0; background-color: var(--ok);
   background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.45) 0 10px, transparent 10px 20px);
@@ -137,18 +149,18 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .bar > div.some { border-right: 2px solid var(--line); }
 @keyframes bar-stripes { to { background-position: 28.28px 0; } }
 
-form { display: flex; flex-direction: column; gap: 22px; }
-label.field, fieldset { display: flex; flex-direction: column; gap: 8px; font-weight: 700; margin: 0; padding: 0; border: 0; min-width: 0; }
-legend { padding: 0; margin-bottom: 8px; font-weight: 700; }
+form { display: flex; flex-direction: column; gap: var(--sp-4); }
+label.field, fieldset { display: flex; flex-direction: column; gap: var(--sp-1); font-weight: 700; margin: 0; padding: 0; border: 0; min-width: 0; }
+legend { padding: 0; margin-bottom: var(--sp-1); font-weight: 700; }
 input[type=text] {
-  width: 100%; min-height: 56px; padding: 12px 16px; border: 2px solid var(--line); border-radius: 14px;
+  width: 100%; min-height: 56px; padding: var(--sp-2) var(--sp-3); border: 2px solid var(--line); border-radius: 14px;
   background: var(--field); font-weight: 400;
 }
 input::placeholder { color: var(--muted); opacity: 0.8; }
-.opts { display: flex; flex-wrap: wrap; gap: 10px; }
+.opts { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
 .opt { position: relative; display: inline-flex; }
 .opt input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
-.opt span { display: inline-flex; align-items: center; min-height: 52px; padding: 8px 20px; border: 2px solid var(--line); border-radius: 999px; background: var(--surface); font-weight: 500; }
+.opt span { display: inline-flex; align-items: center; min-height: 52px; padding: var(--sp-1) var(--sp-4); border: 2px solid var(--line); border-radius: 999px; background: var(--surface); font-weight: 500; }
 .opt input:checked + span { background: var(--ok); font-weight: 700; }
 .opt input:checked + span::before { content: "\2713\00a0"; }
 .opt input:focus-visible + span { outline: 3px solid var(--fg); outline-offset: 3px; }
@@ -161,32 +173,32 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   opacity: 0; transform: translateY(-3px); transition: opacity 0.2s, transform 0.2s;
 }
 .opt.has-tip:hover::after, .opt.has-tip:focus-within::after { opacity: 1; transform: none; }
-#tag-opts { padding-bottom: 8px; } /* room for the little tag under the last option */
+#tag-opts { padding-bottom: var(--sp-1); } /* room for the little tag under the last option */
 .msg { font-weight: 700; min-height: 1.5em; }
 .msg.err { color: var(--error); }
 .msg:empty { min-height: 0; }
 
-.list { display: flex; flex-direction: column; gap: 12px; }
+.list { display: flex; flex-direction: column; gap: var(--sp-2); }
 /* The menu fills two columns on wider screens so a long menu stays short. */
-#list { display: flex; flex-direction: column; gap: 26px; }
+#list { display: flex; flex-direction: column; gap: var(--sp-5); }
 .menu-group h3 {
   display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
-  margin: 0 0 10px; padding-bottom: 6px; border-bottom: 2px solid var(--line);
+  margin: 0 0 var(--sp-2); padding-bottom: var(--sp-1); border-bottom: 2px solid var(--line);
   font-family: var(--display); font-weight: 400; font-size: 1.45rem; line-height: 1.1;
 }
 
 .menu-group h3 span { font-family: var(--body); font-size: 0.9rem; font-weight: 700; color: var(--muted); }
-.menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; align-items: start; }
-.item { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; border: 2px solid var(--line); border-radius: 16px; }
+.menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--sp-2); align-items: start; }
+.item { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-2); flex-wrap: wrap; padding: var(--item-pad); border: 2px solid var(--line); border-radius: 16px; }
 .item.dish { background: var(--ok); }
 .item.diet { background: var(--surface); }
 .item .what { min-width: 0; flex: 1 1 200px; }
 .item .name { font-weight: 700; overflow-wrap: anywhere; }
 .item .meta { font-weight: 500; }
 .item .small { font-size: 0.85rem; overflow-wrap: anywhere; }
-.item .confirm { flex: 1 1 100%; display: flex; flex-direction: column; gap: 8px; }
-.empty, .state { padding: 14px 16px; border: 2px dashed var(--line); border-radius: 16px; color: var(--muted); }
-#add, #diet { scroll-margin-top: 16px; }
+.item .confirm { flex: 1 1 100%; display: flex; flex-direction: column; gap: var(--sp-1); }
+.empty, .state { padding: var(--item-pad); border: 2px dashed var(--line); border-radius: 16px; color: var(--muted); }
+#add, #diet { scroll-margin-top: var(--sp-3); }
 /* Top "Add my dish" button: a gentle hop every few seconds and a bobbing arrow. */
 .btn.jump { animation: jump-hop 3.4s ease-in-out infinite; transition: transform 0.15s, box-shadow 0.15s; }
 .btn.jump:hover { animation-play-state: paused; transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--line); }
@@ -210,22 +222,15 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
 /* Phones: slightly smaller type and padding, full-width buttons that are easy to tap. */
 @media (max-width: 520px) {
   html { font-size: 18px; }
-  body { padding-block: 12px 40px; }
-  .wrap, #main { gap: 24px; }
+  body { padding-block: var(--sp-4) 48px; }
   h1 { font-size: 1.9rem; }
   h2 { font-size: 1.45rem; }
-  .card { padding: 18px; border-radius: 20px; gap: 16px; }
-  form { gap: 18px; }
+  .card { border-radius: 20px; }
   .hero { align-items: stretch; }
   .btn:not(.small) { width: 100%; }
-  .opt span { padding: 8px 16px; }
-  .item { padding: 12px 14px; }
   .item > .btn { width: 100%; }
   .illo { width: 104px; }
   .illo.table { width: 160px; }
-  .title-wrap { padding-top: 80px; }
-  .title-wrap h1 { padding-right: 0; }
-  .title-wrap .cat { top: 0; bottom: auto; right: 12%; width: 124px; }
   .sec-head h2 { font-size: 1.85rem; }
   .chev { width: 34px; height: 34px; }
   .menu-grid { grid-template-columns: 1fr; }
@@ -256,10 +261,10 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   <div id="main">
     <header class="hero">
       <div class="title-wrap">
-        <img class="cat" src="assets/cat%20on%20the%20title.svg?v=1614" alt="" width="118" height="86" onerror="this.remove()">
         <h1 id="title">Potluck dinner</h1>
       </div>
       <div class="card details" id="details" aria-live="polite">
+        <img class="cat" src="assets/cat%20on%20the%20title.svg?v=1614" alt="" width="118" height="86" onerror="this.remove()">
         <div class="state" id="no-details" hidden>The date and place will be added soon.</div>
       </div>
       <button class="btn primary jump" type="button" id="jump-add">Add my dish <span class="jump-arrow" aria-hidden="true">&darr;</span></button>
