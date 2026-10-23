@@ -245,7 +245,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   var API_URL = String(CONFIG.apiUrl || '').trim();
   var CONNECTED = /^https?:\/\//.test(API_URL);
   var REFRESH_MS = (Number(CONFIG.refreshSeconds) || 12) * 1000;
-  var TAGS = ['Vegetarian', 'Vegan', 'Gluten-free', 'Contains nuts', 'Contains dairy', 'Halal'];
+  var TAGS = ['Vegetarian', 'Vegan', 'Gluten-free', 'Contains nuts', 'Contains dairy', 'Contains carmine/natural red dye'];
 
   var state = { dishes: [], diets: [], event: {}, ready: false };
   var $ = function (id) { return document.getElementById(id); };
@@ -633,7 +633,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
     try {
       var wb = XLSX.utils.book_new();
       var ws1 = XLSX.utils.aoa_to_sheet(rows);
-      ws1['!cols'] = [{ wch: 17 }, { wch: 18 }, { wch: 30 }, { wch: 16 }, { wch: 8 }, { wch: 11 }, { wch: 8 }, { wch: 12 }, { wch: 14 }, { wch: 15 }, { wch: 8 }, { wch: 36 }];
+      ws1['!cols'] = [{ wch: 17 }, { wch: 18 }, { wch: 30 }, { wch: 16 }, { wch: 8 }, { wch: 11 }, { wch: 8 }, { wch: 12 }, { wch: 14 }, { wch: 15 }, { wch: 32 }, { wch: 36 }];
       var ws2 = XLSX.utils.aoa_to_sheet(sum);
       ws2['!cols'] = [{ wch: 22 }, { wch: 10 }];
       var ws3 = XLSX.utils.aoa_to_sheet(diet);
