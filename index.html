@@ -107,7 +107,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .fold:not([open]) .fold-hint { display: block; }
 .fold-body { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
 .fold-body > .bar { margin-top: 0; }
-#more { align-self: center; }
 .card .illo { --illo-bg: var(--surface); }
 .illo .ink { fill: currentColor; }
 .illo .bgfill { fill: var(--illo-bg); }
@@ -154,8 +153,14 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
 
 .list { display: flex; flex-direction: column; gap: 12px; }
 /* The menu fills two columns on wider screens so a long menu stays short. */
-#list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; align-items: start; }
-#list > .state { grid-column: 1 / -1; }
+#list { display: flex; flex-direction: column; gap: 26px; }
+.menu-group h3 {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  margin: 0 0 10px; padding-bottom: 6px; border-bottom: 2px solid var(--line);
+  font-family: var(--display); font-weight: 400; font-size: 1.45rem; line-height: 1.1;
+}
+.menu-group h3 span { font-family: var(--body); font-size: 0.9rem; font-weight: 700; color: var(--muted); }
+.menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; align-items: start; }
 .item { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; border: 2px solid var(--line); border-radius: 16px; }
 .item.dish { background: var(--ok); }
 .item.diet { background: var(--surface); }
@@ -184,7 +189,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   .illo { width: 76px; }
   .sec-head h2 { font-size: 1.85rem; }
   .chev { width: 34px; height: 34px; }
-  #list { grid-template-columns: 1fr; }
+  .menu-grid { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -218,12 +223,11 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
     </header>
 
     <section class="section" aria-labelledby="menu-h">
-      <details class="fold" id="menu-fold" open>
-        <summary class="sec-head">
+      <div id="menu-fold">
+        <div class="sec-head">
           <div class="sec-title">
-            <h2 id="menu-h">What's on the menu <span class="chev" aria-hidden="true"></span></h2>
+            <h2 id="menu-h">What's on the menu</h2>
             <p id="count-line" class="count">Loading the menu&hellip;</p>
-            <p class="fold-hint">Tap to open</p>
           </div>
           <svg class="illo" viewBox="0 0 120 150" aria-hidden="true">
             <defs><pattern id="stripes-b" width="8" height="8" patternUnits="userSpaceOnUse"><rect class="bgfill" width="8" height="8"/><rect class="ink" width="8" height="4"/></pattern></defs>
@@ -252,13 +256,12 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
               <path d="M47 51 q4 3 8 0" fill="none"/>
             </g>
           </svg>
-        </summary>
+        </div>
         <div class="fold-body">
           <div class="bar" id="bar" role="progressbar" aria-label="Dishes added" aria-valuemin="0" aria-valuenow="0"><div id="bar-fill"></div></div>
-          <div class="list" id="list"></div>
-          <button class="btn" type="button" id="more" hidden>Show all dishes</button>
+          <div id="list"></div>
         </div>
-      </details>
+      </div>
     </section>
 
     <section class="card" id="add" aria-labelledby="add-h">
@@ -326,7 +329,14 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
     </section>
 
     <section class="card" id="diet" aria-labelledby="diet-h">
-      <h2 id="diet-h">Dietary needs</h2>
+      <details class="fold" id="diet-fold" open>
+      <summary class="sec-head">
+        <div class="sec-title">
+          <h2 id="diet-h">Dietary needs <span class="chev" aria-hidden="true"></span></h2>
+          <p class="fold-hint">Tap to open</p>
+        </div>
+      </summary>
+      <div class="fold-body">
       <p>Can't eat something? Let everyone know so the cooks can plan.</p>
       <div class="list" id="diet-list"></div>
       <form id="diet-form" autocomplete="off">
@@ -339,6 +349,8 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
         <div class="msg" id="diet-msg" role="status" aria-live="polite"></div>
         <button class="btn primary" type="submit" id="diet-submit">Add to the list</button>
       </form>
+      </div>
+      </details>
     </section>
 
     <section class="card quiet" aria-labelledby="exp-h">
@@ -535,11 +547,56 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   }
 
   var listStateText = 'Loading the menu…';
-  var MENU_PREVIEW = 6, showAll = false;
-  $('more').addEventListener('click', function () {
-    showAll = !showAll;
+  // Menu groups. A dish goes in the first group whose words appear in its type
+  // (or, if it has no type, in its name). Anything else gets its own group, named after its type.
+  var GROUPS = [
+    { name: 'Mains', words: ['main', 'rice', 'noodle', 'bee hoon', 'mee', 'pasta', 'meat', 'chicken', 'beef', 'pork', 'mutton', 'lamb', 'fish', 'seafood', 'prawn', 'turkey', 'curry', 'roast'] },
+    { name: 'Sides', words: ['side', 'salad', 'veg', 'bread', 'starter', 'appetiser', 'appetizer', 'soup', 'snack', 'finger food'] },
+    { name: 'Desserts', words: ['dessert', 'sweet', 'cake', 'pie', 'tart', 'kueh', 'kuih', 'cookie', 'biscuit', 'pudding', 'jelly', 'fruit', 'ice cream', 'chocolate'] },
+    { name: 'Drinks', words: ['drink', 'beverage', 'juice', 'tea', 'teh', 'kopi', 'coffee', 'soda', 'soft drink', 'wine', 'beer', 'water', 'lemonade', 'punch', 'cordial', 'bandung', 'milo'] }
+  ];
+  function wordsRe(words) {
+    return new RegExp('\\b(' + words.map(function (w) { return w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|') + ')', 'i');
+  }
+  GROUPS.forEach(function (g) { g.nameRe = wordsRe([g.words[0]]); g.re = wordsRe(g.words); });
+  // Naming a group outright ("main", "side", "dessert", "drink") wins first; then the other
+  // words, drinks first, so "iced tea" or "fruit juice" never lands in Desserts.
+  var MATCH_ORDER = ['Drinks', 'Desserts', 'Mains', 'Sides'].map(function (n) {
+    return GROUPS.filter(function (g) { return g.name === n; })[0];
+  });
+  function matchGroup(text) {
+    text = text || '';
+    for (var i = 0; i < GROUPS.length; i++) if (GROUPS[i].nameRe.test(text)) return GROUPS[i].name;
+    for (var j = 0; j < MATCH_ORDER.length; j++) if (MATCH_ORDER[j].re.test(text)) return MATCH_ORDER[j].name;
+    return '';
+  }
+  function groupFor(d) {
+    var t = (d.type || '').trim();
+    if (t) return matchGroup(t) || t.charAt(0).toUpperCase() + t.slice(1);
+    return matchGroup(d.dish) || 'Other';
+  }
+  // Main groups first in meal order, then any other types A to Z, then "Other".
+  function groupOrder(names) {
+    var main = GROUPS.map(function (g) { return g.name; });
+    return names.slice().sort(function (a, b) {
+      var ia = main.indexOf(a), ib = main.indexOf(b);
+      if (ia < 0) ia = a === 'Other' ? 99 : 50;
+      if (ib < 0) ib = b === 'Other' ? 99 : 50;
+      return ia - ib || a.toLowerCase().localeCompare(b.toLowerCase());
+    });
+  }
+  // Each group shows its first few dishes, with a button for the rest.
+  var PER_GROUP = 4, expanded = {};
+  $('list').addEventListener('click', function (ev) {
+    var b = ev.target.closest('button[data-group]');
+    if (!b) return;
+    var g = b.getAttribute('data-group');
+    expanded[g] = !expanded[g];
     renderMenu();
-    if (!showAll) $('menu-fold').scrollIntoView({ block: 'start' });
+    if (!expanded[g]) {
+      var head = Array.prototype.filter.call(document.querySelectorAll('#list .menu-group h3'), function (h) { return h.firstChild.nodeValue === g; })[0];
+      if (head) head.scrollIntoView({ block: 'start' });
+    }
   });
   // The "Add my dish" button at the top opens the form section if it was closed.
   Array.prototype.forEach.call(document.querySelectorAll('a[href="#add"]'), function (a) {
@@ -562,29 +619,42 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
     $('bar').setAttribute('aria-valuemax', String(goal));
     $('bar').setAttribute('aria-valuenow', String(Math.min(n, goal)));
 
-    // Similar types sit together; entries without a type go last.
-    var sorted = state.dishes.slice().sort(function (a, b) {
-      var ta = (a.type || '').toLowerCase(), tb = (b.type || '').toLowerCase();
-      if (ta !== tb) return !ta ? 1 : !tb ? -1 : ta < tb ? -1 : 1;
-      return (a.createdAt || 0) - (b.createdAt || 0);
+    // Put each dish under a heading (Mains, Sides, Desserts, Drinks, ...).
+    var groups = {};
+    state.dishes.forEach(function (d) {
+      var g = groupFor(d);
+      (groups[g] = groups[g] || []).push(d);
     });
-    // A long menu shows the first few dishes, with a button to see the rest.
-    var more = $('more');
-    more.hidden = n <= MENU_PREVIEW;
-    more.textContent = showAll ? 'Show fewer dishes' : 'Show all ' + n + ' dishes';
-    more.setAttribute('aria-expanded', showAll ? 'true' : 'false');
-    (showAll ? sorted : sorted.slice(0, MENU_PREVIEW)).forEach(function (d) {
-      var meta = [d.type, d.serves ? 'Serves about ' + d.serves : ''].filter(Boolean).join(' · ');
-      var tags = (d.tags || []).join(' · ');
-      list.appendChild(el('div', { class: 'item dish' }, [
-        el('div', { class: 'what' }, [
-          el('div', { class: 'name', text: d.dish }),
-          meta ? el('div', { class: 'meta', text: meta }) : null,
-          el('div', { text: 'by ' + d.name }),
-          tags ? el('div', { class: 'small', text: tags }) : null,
-          d.notes ? el('div', { class: 'small', text: d.notes }) : null
+    groupOrder(Object.keys(groups)).forEach(function (g) {
+      var items = groups[g].sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
+      var open = !!expanded[g];
+      var grid = el('div', { class: 'menu-grid' });
+      (open ? items : items.slice(0, PER_GROUP)).forEach(function (d) {
+        var meta = [d.type, d.serves ? 'Serves about ' + d.serves : ''].filter(Boolean).join(' · ');
+        var tags = (d.tags || []).join(' · ');
+        grid.appendChild(el('div', { class: 'item dish' }, [
+          el('div', { class: 'what' }, [
+            el('div', { class: 'name', text: d.dish }),
+            meta ? el('div', { class: 'meta', text: meta }) : null,
+            el('div', { text: 'by ' + d.name }),
+            tags ? el('div', { class: 'small', text: tags }) : null,
+            d.notes ? el('div', { class: 'small', text: d.notes }) : null
+          ]),
+          removeControls('dish', d, d.dish)
+        ]));
+      });
+      var extra = items.length - PER_GROUP;
+      list.appendChild(el('div', { class: 'menu-group' }, [
+        el('h3', null, [
+          document.createTextNode(g),
+          el('span', { text: items.length + (items.length === 1 ? ' dish' : ' dishes') })
         ]),
-        removeControls('dish', d, d.dish)
+        grid,
+        extra > 0 ? el('button', {
+          class: 'btn small', type: 'button', 'data-group': g, style: 'margin-top:12px',
+          'aria-expanded': open ? 'true' : 'false',
+          text: open ? 'Show fewer' : 'Show ' + extra + ' more ' + g.toLowerCase()
+        }) : null
       ]));
     });
   }
