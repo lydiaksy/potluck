@@ -153,6 +153,15 @@ button, input, select, textarea { font: inherit; color: inherit; }
 form { display: flex; flex-direction: column; gap: var(--sp-4); }
 label.field, fieldset { display: flex; flex-direction: column; gap: var(--sp-1); font-weight: 700; margin: 0; padding: 0; border: 0; min-width: 0; }
 legend { padding: 0; margin-bottom: var(--sp-1); font-weight: 700; }
+select {
+  width: 100%; min-height: 56px; padding: var(--sp-2) calc(var(--sp-3) + 28px) var(--sp-2) var(--sp-3);
+  border: 2px solid var(--line); border-radius: 14px; background-color: var(--field); font-weight: 400; cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--fg) 50%), linear-gradient(135deg, var(--fg) 50%, transparent 50%);
+  background-position: calc(100% - 24px) 50%, calc(100% - 17px) 50%; background-size: 7px 7px, 7px 7px; background-repeat: no-repeat;
+}
+select:invalid { color: var(--muted); }
+select option { color: var(--fg); background: var(--surface); }
 input[type=text] {
   width: 100%; min-height: 56px; padding: var(--sp-2) var(--sp-3); border: 2px solid var(--line); border-radius: 14px;
   background: var(--field); font-weight: 400;
@@ -336,7 +345,14 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
           <input type="text" id="f-dish" maxlength="80" required placeholder="e.g. Fried bee hoon">
         </label>
         <label class="field" for="f-type">What type of food or drink is it?
-          <input type="text" id="f-type" maxlength="40" required placeholder="e.g. Main dish, dessert, drink">
+          <select id="f-type" required>
+            <option value="" selected disabled>Choose one</option>
+            <option>Main dish</option>
+            <option>Side dish</option>
+            <option>Dessert</option>
+            <option>Drinks</option>
+            <option>Others</option>
+          </select>
         </label>
         <label class="field" for="f-serves">About how many people will it serve? (optional)
           <input type="text" id="f-serves" maxlength="3" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 10">
@@ -614,8 +630,8 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
     var main = GROUPS.map(function (g) { return g.name; });
     return names.slice().sort(function (a, b) {
       var ia = main.indexOf(a), ib = main.indexOf(b);
-      if (ia < 0) ia = a === 'Other' ? 99 : 50;
-      if (ib < 0) ib = b === 'Other' ? 99 : 50;
+      if (ia < 0) ia = (a === 'Other' || a === 'Others') ? 99 : 50;
+      if (ib < 0) ib = (b === 'Other' || b === 'Others') ? 99 : 50;
       return ia - ib || a.toLowerCase().localeCompare(b.toLowerCase());
     });
   }
