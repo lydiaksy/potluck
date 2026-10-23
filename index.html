@@ -213,6 +213,8 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   92% { transform: translateY(0); }
 }
 @keyframes jump-arrow { 50% { transform: translateY(4px); } }
+/* Friendly sign-off at the bottom of the page. */
+.see-you { font-family: var(--display); font-size: 2.2rem; line-height: 1.1; color: var(--tomato); text-align: center; margin-top: var(--sp-3); }
 /* Floating "Scroll down" button, bottom right. At the bottom of the page it becomes "Back to top". */
 .scroll-btn {
   position: fixed; z-index: 10;
@@ -294,7 +296,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
         <h1 id="title">Potluck dinner</h1>
       </div>
       <div class="card details" id="details" aria-live="polite">
-        <img class="cat" src="assets/cat%20on%20the%20title.svg?v=1614" alt="" width="118" height="86" onerror="this.remove()">
+        <img class="cat" src="assets/cat%20on%20the%20title.svg?v=1650" alt="" width="118" height="86" onerror="this.remove()">
         <div class="state" id="no-details" hidden>The date and place will be added soon.</div>
       </div>
       <button class="btn primary jump" type="button" id="jump-add">Add my dish <span class="jump-arrow" aria-hidden="true">&darr;</span></button>
@@ -307,7 +309,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
             <h2 id="menu-h">What's on the menu</h2>
             <p id="count-line" class="count">Loading the menu&hellip;</p>
           </div>
-          <img class="illo table art" src="assets/whats%20on%20the%20menu.svg?v=1614" alt="" width="170" height="118" onerror="this.remove()">
+          <img class="illo table art" src="assets/whats%20on%20the%20menu.svg?v=1650" alt="" width="170" height="118" onerror="this.remove()">
         </div>
         <div class="fold-body">
           <div class="bar" id="bar" role="progressbar" aria-label="Dishes added" aria-valuemin="0" aria-valuenow="0"><div id="bar-fill"></div></div>
@@ -323,7 +325,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
           <h2 id="add-h">Add my dish <span class="chev" aria-hidden="true"></span></h2>
           <p class="fold-hint">Tap to open</p>
         </div>
-        <img class="illo art" src="assets/add%20my%20dish.svg?v=1614" alt="" width="104" height="76" onerror="this.remove()">
+        <img class="illo art" src="assets/dietry%20needs.svg?v=1650" alt="" width="104" height="76" onerror="this.remove()">
       </summary>
       <div class="fold-body">
       <form id="form" autocomplete="off">
@@ -360,7 +362,7 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
           <h2 id="diet-h">Dietary needs <span class="chev" aria-hidden="true"></span></h2>
           <p class="fold-hint">Tap to open</p>
         </div>
-        <img class="illo art" src="assets/dietry%20needs.svg?v=1614" alt="" width="104" height="76" onerror="this.remove()">
+        <img class="illo art" src="assets/add%20my%20dish.svg?v=1650" alt="" width="104" height="76" onerror="this.remove()">
       </summary>
       <div class="fold-body">
       <p>Can't eat something? Let everyone know so the cooks can plan.</p>
@@ -385,6 +387,8 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
       <div><button class="btn" type="button" id="export" disabled>Download the list (Excel)</button></div>
       <div class="msg" id="export-msg" role="status" aria-live="polite"></div>
     </section>
+
+    <p class="see-you">See you there! :-)</p>
 
     <footer id="contact" style="font-size:0.9rem"></footer>
 
