@@ -62,6 +62,13 @@ body {
 #main { width: 100%; }
 h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap: balance; line-height: 1.05; }
 h1, #menu-h { color: var(--tomato); }
+/* Pink cat sitting on the title: drawn behind the letters, so its paws tuck in behind them. */
+:root { --cat: #EE93BF; --cat-ink: #1E3A2A; }
+.title-wrap { position: relative; padding-top: 96px; align-self: stretch; }
+.title-wrap h1 { position: relative; z-index: 1; }
+.cat { position: absolute; top: 4px; left: 26%; width: 118px; height: auto; z-index: 0; }
+/* Table sketch next to the menu heading, in tomato red. */
+.illo.table { width: 170px; color: var(--tomato); }
 h1 { font-size: 2.6rem; }
 h2 { font-size: 1.7rem; }
 p { margin: 0; }
@@ -193,6 +200,9 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   .item { padding: 12px 14px; }
   .item > .btn { width: 100%; }
   .illo { width: 76px; }
+  .illo.table { width: 118px; }
+  .title-wrap { padding-top: 70px; }
+  .cat { width: 86px; left: 30%; }
   .sec-head h2 { font-size: 1.85rem; }
   .chev { width: 34px; height: 34px; }
   .menu-grid { grid-template-columns: 1fr; }
@@ -221,7 +231,26 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
 
   <div id="main">
     <header class="hero">
-      <h1 id="title">Potluck dinner</h1>
+      <div class="title-wrap">
+        <svg class="cat" viewBox="0 0 120 110" aria-hidden="true">
+          <!-- a pink cat perched on the title; its paws tuck behind the letters -->
+          <path d="M46 99 C20 99 9 72 15 48 C19 32 15 22 8 17" fill="none" stroke="var(--cat)" stroke-width="13" stroke-linecap="round"/>
+          <path fill="var(--cat)" d="M40 108 C38 82 50 62 66 54 L69 32 C69 21 77 14 88 14 C99 14 107 21 106 32 L104 54 C112 67 114 88 112 108 Z"/>
+          <path fill="var(--cat)" d="M71 24 L72 5 L85 15 Z M104 24 L104 5 L91 15 Z"/>
+          <g fill="none" stroke="var(--cat-ink)" stroke-width="2.4" stroke-linecap="round">
+            <path d="M75 12 L76 19 M101 12 L100 19"/>
+            <path d="M85 37 Q88 41 91 37 Q94 41 97 37"/>
+            <path d="M89 63 L89 106 M99 63 L99 106"/>
+            <path d="M52 82 C60 74 72 76 74 88 L74 106"/>
+          </g>
+          <g fill="var(--cat-ink)">
+            <ellipse cx="82" cy="28" rx="1.9" ry="3"/>
+            <ellipse cx="99" cy="28" rx="1.9" ry="3"/>
+            <path d="M88 32 H94 L91 35.5 Z"/>
+          </g>
+        </svg>
+        <h1 id="title">Potluck dinner</h1>
+      </div>
       <div class="card details" id="details" aria-live="polite">
         <div class="state" id="no-details" hidden>The date and place will be added soon.</div>
       </div>
@@ -235,31 +264,35 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
             <h2 id="menu-h">What's on the menu</h2>
             <p id="count-line" class="count">Loading the menu&hellip;</p>
           </div>
-          <svg class="illo" viewBox="0 0 120 150" aria-hidden="true">
-            <defs><pattern id="stripes-b" width="8" height="8" patternUnits="userSpaceOnUse"><rect class="bgfill" width="8" height="8"/><rect class="ink" width="8" height="4"/></pattern></defs>
-            <g stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <!-- roast turkey on a raised tray -->
-              <path class="bgfill" d="M70 30 q0 -20 22 -20 q22 0 22 20 z"/>
-              <path d="M74 18 q-6 -6 -10 -2 M110 18 q6 -6 10 -2" fill="none"/>
-              <path d="M84 16 q6 4 14 0" fill="none"/>
-              <path d="M62 31 h56" stroke-width="3"/>
-              <!-- walking legs -->
-              <path class="ink" d="M38 102 L30 134 L40 136 L50 104 z"/>
-              <path class="ink" d="M52 102 L66 132 L75 127 L62 102 z"/>
-              <path class="ink" d="M24 138 q4 -6 16 -3 v4 h-16 z"/>
-              <path class="ink" d="M66 132 q10 -6 16 0 l-2 4 h-14 z"/>
-              <!-- striped top and arms -->
-              <path fill="url(#stripes-b)" d="M30 104 L32 72 q2 -12 18 -12 q16 0 18 12 L70 104 z"/>
-              <path fill="url(#stripes-b)" d="M62 66 L80 34 L88 38 L70 74 z"/>
-              <path fill="url(#stripes-b)" d="M34 70 L22 96 L29 99 L40 76 z"/>
-              <circle class="bgfill" cx="25" cy="100" r="4"/>
-              <circle class="bgfill" cx="84" cy="33" r="4"/>
-              <!-- head -->
-              <ellipse class="bgfill" cx="48" cy="44" rx="11" ry="13"/>
-              <path class="ink" d="M37 41 q0 -14 13 -14 q10 0 10 9 q-9 -3 -23 5 z"/>
-              <path d="M58 44 l9 3 l-9 2" fill="none"/>
-              <circle class="ink" cx="53" cy="42" r="1.5" stroke="none"/>
-              <path d="M47 51 q4 3 8 0" fill="none"/>
+          <svg class="illo table" viewBox="0 0 200 120" aria-hidden="true">
+            <g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+              <!-- left chair -->
+              <path d="M13 41 C20 34 33 35 39 40 L36 75"/>
+              <path d="M13 41 L23 77"/>
+              <path d="M21 41 L28 75 M30 39 L32 75"/>
+              <path d="M19 79 L46 76 L48 84 L21 87 Z"/>
+              <path d="M21 87 L19 112 M47 84 L49 110 M30 87 L31 106"/>
+              <!-- table top with plates, cutlery and a vase -->
+              <path d="M52 50 C50 40 70 36 100 36 C130 36 150 39 149 51 C147 62 128 65 100 64 C72 64 54 62 52 50 Z"/>
+              <path d="M62 62 L60 109 M139 61 L141 108 M84 64 L86 103 M116 64 L114 103"/>
+              <path d="M61 95 L114 81 M85 82 L140 97"/>
+              <path d="M64 48 C64 44 84 44 84 48 C84 52 64 52 64 48 Z"/>
+              <path d="M68 47 C70 43 76 42 80 46"/>
+              <path d="M116 48 C116 44 136 44 136 48 C136 52 116 52 116 48 Z"/>
+              <path d="M120 47 C122 43 129 42 132 46"/>
+              <path d="M88 55 L94 55 M108 41 L114 43 M106 57 L113 55"/>
+              <path d="M95 39 C93 33 94 28 96 24 L104 24 C106 28 107 33 105 39 Z"/>
+              <path d="M100 24 L100 5"/>
+              <path d="M100 18 C93 17 90 13 90 9 C96 10 99 13 100 17"/>
+              <path d="M100 13 C107 12 110 8 110 4 C104 5 101 8 100 12"/>
+              <path d="M100 22 C106 22 110 19 111 15 C105 15 102 18 100 21"/>
+              <path d="M100 9 C95 8 93 5 94 2"/>
+              <!-- right chair -->
+              <path d="M164 22 C170 18 181 18 186 20 L184 73"/>
+              <path d="M164 22 L166 75"/>
+              <path d="M171 23 L172 73 M178 22 L178 73"/>
+              <path d="M155 77 L188 74 L190 82 L157 85 Z"/>
+              <path d="M157 85 L155 112 M190 82 L192 110 M172 84 L172 107"/>
             </g>
           </svg>
         </div>
