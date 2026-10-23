@@ -1,0 +1,4 @@
+# The Google script and its private seed stay out of the public repo.
+apps-script/
+.clasp.json
+.clasprc.json

@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Potluck Board</title>
+<script>
+/* ===== Settings: paste your Apps Script web app address (ends in /exec) below. ===== */
+var POTLUCK_CONFIG = {
+  apiUrl: 'https://script.google.com/macros/s/AKfycbx79Bqane_blpkFxYWj3SPx0tXHfyrh3nApTAiiEFKDoJjFU7HW96qJ2OcpS-CQPGuo/exec',
+  refreshSeconds: 12
+};
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+/* Layout: one centered column, big type and big buttons, list grouped by course. */
+:root {
+  --bg: #FFF3C4;
+  --surface: #FFFFFF;
+  --fg: #2B1B2E;
+  --muted: #5A4A5C;
+  --accent: #B8321C;
+  --accent-fg: #FFFFFF;
+  --ok: #CFE8B5;
+  --warn: #FFD0DE;
+  --line: #2B1B2E;
+  --display: 'Bagel Fat One', 'Trebuchet MS', sans-serif;
+  --body: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --scale: 1;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1F1622; --surface: #2C2030; --fg: #FBEFD0; --muted: #CDBBCB;
+    --accent: #FF8A70; --accent-fg: #2B1B2E; --ok: #35502B; --warn: #5C2E43; --line: #FBEFD0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1F1622; --surface: #2C2030; --fg: #FBEFD0; --muted: #CDBBCB;
+  --accent: #FF8A70; --accent-fg: #2B1B2E; --ok: #35502B; --warn: #5C2E43; --line: #FBEFD0;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { font-size: calc(20px * var(--scale)); -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--body); font-size: 1rem; line-height: 1.5;
+  padding-block: 20px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 32px; }
+h1, h2 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap: balance; line-height: 1.05; }
+h1 { font-size: 2.6rem; color: var(--accent); }
+h2 { font-size: 1.7rem; }
+p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px; }
+
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.brand { font-family: var(--display); font-size: 1.4rem; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 52px; padding: 12px 24px; border-radius: 999px; border: 2px solid var(--line);
+  background: var(--surface); font-weight: 700; cursor: pointer;
+}
+.btn.primary { background: var(--accent); color: var(--accent-fg); box-shadow: 4px 4px 0 var(--line); }
+.btn.small { min-height: 44px; padding: 8px 18px; }
+.btn[disabled] { opacity: 0.6; cursor: default; }
+.btn-row { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.card { background: var(--surface); border: 2px solid var(--line); border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+.details { display: flex; flex-direction: column; gap: 10px; }
+.detail { display: flex; gap: 12px; align-items: flex-start; }
+.detail svg { flex: none; margin-top: 4px; }
+.detail b { display: block; }
+.muted { color: var(--muted); }
+
+.progress-row { display: flex; flex-direction: column; gap: 10px; }
+.bar { height: 20px; border: 2px solid var(--line); border-radius: 999px; background: var(--surface); overflow: hidden; }
+.bar > div { height: 100%; background: var(--ok); border-right: 2px solid var(--line); transition: width 0.3s; }
+.chips { display: flex; flex-wrap: wrap; gap: 10px; }
+.chip { display: inline-flex; align-items: center; min-height: 44px; padding: 6px 16px; border-radius: 999px; border: 2px solid var(--line); background: var(--warn); font-weight: 700; }
+.chip.done { background: var(--ok); }
+
+form { display: flex; flex-direction: column; gap: 22px; }
+label.field, fieldset { display: flex; flex-direction: column; gap: 8px; font-weight: 700; margin: 0; padding: 0; border: 0; min-width: 0; }
+legend { padding: 0; margin-bottom: 8px; font-weight: 700; }
+input[type=text], input[type=password], textarea {
+  width: 100%; min-height: 56px; padding: 12px 16px; border: 2px solid var(--line); border-radius: 14px;
+  background: var(--bg); font-weight: 400;
+}
+.opts { display: flex; flex-wrap: wrap; gap: 10px; }
+.opt { position: relative; display: inline-flex; }
+.opt input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.opt span { display: inline-flex; align-items: center; min-height: 52px; padding: 8px 20px; border: 2px solid var(--line); border-radius: 999px; background: var(--surface); font-weight: 500; }
+.opt input:checked + span { background: var(--ok); font-weight: 700; }
+.opt input:checked + span::before { content: "\2713\00a0"; }
+.opt input:focus-visible + span { outline: 3px solid var(--fg); outline-offset: 3px; }
+.msg { font-weight: 700; min-height: 1.5em; }
+.msg.err { color: var(--accent); }
+
+.group { display: flex; flex-direction: column; gap: 12px; }
+.group-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.dish { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 16px; border: 2px solid var(--line); border-radius: 16px; background: var(--ok); }
+.dish .what { min-width: 0; flex: 1 1 200px; }
+.dish .name { font-weight: 700; overflow-wrap: anywhere; }
+.dish .tags { font-size: 0.85rem; }
+.dish .confirm { flex: 1 1 100%; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.empty-slot { padding: 14px 16px; border: 2px dashed var(--line); border-radius: 16px; background: var(--surface); }
+.state { padding: 20px; border: 2px dashed var(--line); border-radius: 16px; background: var(--surface); }
+.host-note { font-size: 0.9rem; }
+.row2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.targets { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
+@media (max-width: 520px) { h1 { font-size: 2.1rem; } .row2 { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .bar > div { transition: none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand">potluck.</div>
+    <button class="btn small" id="textsize" type="button" aria-pressed="false">Larger text</button>
+  </div>
+
+  <section class="card" id="gate" hidden aria-labelledby="gate-h">
+    <h2 id="gate-h">Welcome</h2>
+    <p>Please enter the password from your invitation to see the potluck list.</p>
+    <form id="gate-form" autocomplete="off">
+      <label class="field" for="g-pass">Password
+        <input type="text" id="g-pass" maxlength="60" autocapitalize="characters" spellcheck="false">
+      </label>
+      <div class="msg" id="gate-msg" role="status" aria-live="polite"></div>
+      <div><button class="btn primary" type="submit" id="gate-btn">Open the potluck list</button></div>
+    </form>
+  </section>
+
+  <div id="main" style="display:flex;flex-direction:column;gap:32px">
+  <header style="display:flex;flex-direction:column;gap:20px">
+    <h1 id="title">Bring a dish. Bring a friend.</h1>
+    <div class="card details" id="details" aria-live="polite">
+      <div class="state" id="no-details" hidden>The host has not added the date and place yet.</div>
+    </div>
+  </header>
+
+  <section class="card" aria-labelledby="status-h">
+    <h2 id="status-h">What we have so far</h2>
+    <div class="progress-row">
+      <div id="count-line" style="font-weight:700">Loading the list&hellip;</div>
+      <div class="bar" role="img" aria-label="Progress"><div id="bar-fill" style="width:0%"></div></div>
+    </div>
+    <div>
+      <div style="font-weight:700;margin-bottom:10px">Still needed</div>
+      <div class="chips" id="gaps"></div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="add-h" id="add">
+    <h2 id="add-h">Add my dish</h2>
+    <form id="form" autocomplete="off">
+      <label class="field" for="f-name">Your name
+        <input type="text" id="f-name" maxlength="60" required>
+      </label>
+      <label class="field" for="f-dish">What are you bringing?
+        <input type="text" id="f-dish" maxlength="80" required>
+      </label>
+      <fieldset>
+        <legend>Which course is it?</legend>
+        <div class="opts" id="cat-opts"></div>
+      </fieldset>
+      <fieldset>
+        <legend>Does it contain or suit any of these? (tick all that apply)</legend>
+        <div class="opts" id="tag-opts"></div>
+      </fieldset>
+      <label class="field" for="f-notes">Anything else people should know? (optional)
+        <input type="text" id="f-notes" maxlength="120">
+      </label>
+      <div class="msg" id="form-msg" role="status" aria-live="polite"></div>
+      <button class="btn primary" type="submit" id="submit">Add my dish</button>
+    </form>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:20px" aria-labelledby="list-h">
+    <h2 id="list-h">Who is bringing what</h2>
+    <div id="list"></div>
+  </section>
+
+  <section class="card" aria-labelledby="exp-h">
+    <h2 id="exp-h">Get the list in Excel</h2>
+    <p class="muted">Downloads a workbook with the full dish list and a count for each course.</p>
+    <div><button class="btn primary" type="button" id="export" disabled>Download Excel file</button></div>
+    <div class="msg" id="export-msg" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card" id="host" aria-labelledby="host-h">
+    <h2 id="host-h">Host login</h2>
+    <p class="host-note muted" id="host-note">Only for the person running the potluck. Enter the host passcode to change the event details.</p>
+
+    <form id="login-form">
+      <label class="field" for="h-pass">Host passcode
+        <input type="password" id="h-pass" maxlength="100" autocomplete="current-password">
+      </label>
+      <div class="msg" id="login-msg" role="status" aria-live="polite"></div>
+      <div><button class="btn primary" type="submit" id="login-btn">Log in</button></div>
+    </form>
+
+    <form id="host-form" hidden>
+      <label class="field" for="h-title">Event name
+        <input type="text" id="h-title" maxlength="80">
+      </label>
+      <div class="row2">
+        <label class="field" for="h-date">Date
+          <input type="text" id="h-date" maxlength="60">
+        </label>
+        <label class="field" for="h-time">Time
+          <input type="text" id="h-time" maxlength="40">
+        </label>
+      </div>
+      <label class="field" for="h-place">Place
+        <input type="text" id="h-place" maxlength="80">
+      </label>
+      <label class="field" for="h-address">Address
+        <input type="text" id="h-address" maxlength="120">
+      </label>
+      <label class="field" for="h-contact">Questions? Contact
+        <input type="text" id="h-contact" maxlength="80">
+      </label>
+      <fieldset>
+        <legend>How many dishes do you want in each course?</legend>
+        <div class="targets" id="h-targets"></div>
+      </fieldset>
+      <div class="msg" id="host-msg" role="status" aria-live="polite"></div>
+      <div class="btn-row">
+        <button class="btn primary" type="submit" id="host-save">Save settings</button>
+        <button class="btn" type="button" id="logout">Log out</button>
+      </div>
+    </form>
+  </section>
+
+  <footer class="muted" id="contact" style="font-size:0.9rem"></footer>
+  </div>
+</div>
+
+<script>
+(function () {
+  var CONFIG = window.POTLUCK_CONFIG || {};
+  var API_URL = String(CONFIG.apiUrl || '').trim();
+  var CONNECTED = /^https?:\/\//.test(API_URL);
+  var REFRESH_MS = (Number(CONFIG.refreshSeconds) || 12) * 1000;
+
+  var CATS = ['Mains', 'Sides', 'Salads', 'Desserts', 'Drinks'];
+  var TAGS = ['Vegetarian', 'Vegan', 'Gluten-free', 'Contains nuts', 'Contains dairy', 'Halal'];
+  var DEFAULT_TARGETS = { Mains: 3, Sides: 3, Salads: 2, Desserts: 3, Drinks: 3 };
+  var state = { dishes: [], event: {}, ready: false };
+  var host = { pass: '' };
+  var access = '';
+  try { access = localStorage.getItem('potluck-access') || ''; } catch (e) {}
+  var $ = function (id) { return document.getElementById(id); };
+
+  function el(tag, props, kids) {
+    var n = document.createElement(tag);
+    if (props) Object.keys(props).forEach(function (k) {
+      if (k === 'text') n.textContent = props[k];
+      else if (k === 'class') n.className = props[k];
+      else n.setAttribute(k, props[k]);
+    });
+    (kids || []).forEach(function (c) { if (c) n.appendChild(c); });
+    return n;
+  }
+  function targets() {
+    var t = state.event && state.event.targets || {};
+    var out = {};
+    CATS.forEach(function (c) { var v = parseInt(t[c], 10); out[c] = isNaN(v) ? DEFAULT_TARGETS[c] : v; });
+    return out;
+  }
+  function errText(e, fallback) {
+    var code = e && e.code;
+    if (code === 'bad_passcode') return 'That passcode is not right. Please try again.';
+    if (code === 'too_many_tries') return 'Too many wrong tries. Please wait 15 minutes and try again.';
+    if (code === 'no_passcode') return 'The host passcode has not been set up yet.';
+    if (code === 'list_full') return 'The list is full. Please ask the host.';
+    return fallback;
+  }
+  function setMsg(node, text, isErr) {
+    node.className = isErr ? 'msg err' : 'msg';
+    node.textContent = text || '';
+  }
+
+  /* ---------- talking to the Google Sheet ---------- */
+  // POST is sent as text/plain so the browser does not need a CORS preflight.
+  function api(body) {
+    var url = API_URL, opts;
+    if (body) {
+      body.access = access;
+      opts = { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) };
+    } else {
+      url += (url.indexOf('?') < 0 ? '?' : '&') + 'access=' + encodeURIComponent(access) + '&t=' + Date.now();
+      opts = { method: 'GET', cache: 'no-store' };
+    }
+    var ctrl = window.AbortController ? new AbortController() : null, timer = null;
+    if (ctrl) { opts.signal = ctrl.signal; timer = setTimeout(function () { ctrl.abort(); }, 20000); }
+    return fetch(url, opts).then(function (r) {
+      if (!r.ok) throw { code: 'http_' + r.status };
+      return r.json();
+    }).then(function (d) {
+      clearTimeout(timer);
+      if (!d || d.ok !== true) throw { code: (d && d.error) || 'bad_response' };
+      return d;
+    }, function (e) {
+      clearTimeout(timer);
+      throw e && e.code ? e : { code: 'network' };
+    });
+  }
+
+  // Every request gets a number; an older answer never replaces a newer one.
+  var lastSeq = 0, appliedSeq = 0, writing = 0, loading = false, pollTimer = null, failCount = 0;
+
+  function applyState(d, seq) {
+    if (seq < appliedSeq) return;
+    appliedSeq = seq;
+    state.dishes = (d.dishes || []).slice().sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
+    state.event = d.event || {};
+    if (!state.ready) { state.ready = true; clearTimeout(failTimer); }
+    if (host.pass && !hostFilled) fillHost();
+    if (pendingRemove && !state.dishes.some(function (x) { return x.id === pendingRemove; })) pendingRemove = null;
+    renderAll();
+  }
+
+  function load() {
+    if (!CONNECTED || !access || loading || writing) return;
+    loading = true;
+    var seq = ++lastSeq;
+    api(null).then(function (d) {
+      failCount = 0;
+      applyState(d, seq);
+    }, function (e) {
+      if (e.code === 'need_access') { lockOut(); return; }
+      failCount++;
+      if (!state.ready) showLoadError();
+      else if (failCount >= 3) $('count-line').textContent = 'The list stopped updating. Please reload the page.';
+    }).then(function () { loading = false; schedule(); });
+  }
+
+  function schedule() {
+    clearTimeout(pollTimer);
+    if (!CONNECTED || !access || document.hidden) return;
+    pollTimer = setTimeout(load, REFRESH_MS);
+  }
+
+  // Sends a change; the reply carries the fresh list, so the page updates straight away.
+  function write(body) {
+    writing++;
+    clearTimeout(pollTimer);
+    var seq = ++lastSeq;
+    return api(body).then(function (d) {
+      writing--; failCount = 0;
+      applyState(d, seq);
+      schedule();
+      return d;
+    }, function (e) {
+      writing--;
+      if (e.code === 'need_access') lockOut(); else schedule();
+      throw e;
+    });
+  }
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) clearTimeout(pollTimer);
+    else load();
+  });
+
+  /* ---------- text size (per-viewer convenience) ---------- */
+  var big = false;
+  try { big = localStorage.getItem('potluck-big') === '1'; } catch (e) {}
+  function applySize() {
+    document.documentElement.style.setProperty('--scale', big ? '1.2' : '1');
+    var b = $('textsize');
+    b.setAttribute('aria-pressed', big ? 'true' : 'false');
+    b.textContent = big ? 'Normal text' : 'Larger text';
+  }
+  $('textsize').addEventListener('click', function () {
+    big = !big;
+    try { localStorage.setItem('potluck-big', big ? '1' : '0'); } catch (e) {}
+    applySize();
+  });
+  applySize();
+
+  /* ---------- form option buttons ---------- */
+  function buildOpts(container, name, items, type) {
+    items.forEach(function (label, i) {
+      var id = name + '-' + i;
+      var input = el('input', { type: type, name: name, id: id, value: label });
+      if (type === 'radio' && i === 0) input.checked = true;
+      var wrap = el('label', { class: 'opt', for: id }, [input, el('span', { text: label })]);
+      container.appendChild(wrap);
+    });
+  }
+  buildOpts($('cat-opts'), 'cat', CATS, 'radio');
+  buildOpts($('tag-opts'), 'tag', TAGS, 'checkbox');
+
+  /* ---------- rendering ---------- */
+  var ICON_CAL = '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>';
+  var ICON_PIN = '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>';
+
+  function renderEvent() {
+    var e = state.event || {};
+    $('title').textContent = e.title || 'Bring a dish. Bring a friend.';
+    document.title = e.title || 'Potluck Board';
+    var box = $('details');
+    Array.prototype.slice.call(box.querySelectorAll('.detail')).forEach(function (n) { n.remove(); });
+    var has = false;
+    if (e.date || e.time) {
+      has = true;
+      var d = el('div', { class: 'detail' });
+      d.innerHTML = ICON_CAL;
+      d.appendChild(el('div', null, [el('b', { text: e.date || '' }), el('span', { text: e.time || '' })]));
+      box.insertBefore(d, $('no-details'));
+    }
+    if (e.place || e.address) {
+      has = true;
+      var p = el('div', { class: 'detail' });
+      p.innerHTML = ICON_PIN;
+      p.appendChild(el('div', null, [el('b', { text: e.place || '' }), el('span', { text: e.address || '' })]));
+      box.insertBefore(p, $('no-details'));
+    }
+    $('no-details').hidden = has || !state.ready;
+    $('contact').textContent = e.contact ? 'Questions? ' + e.contact : '';
+  }
+
+  function renderStatus() {
+    var t = targets(), total = 0, have = 0;
+    var counts = {};
+    CATS.forEach(function (c) { counts[c] = 0; });
+    state.dishes.forEach(function (d) { if (counts[d.category] !== undefined) counts[d.category]++; });
+    CATS.forEach(function (c) { total += t[c]; have += Math.min(counts[c], t[c]); });
+    if (!state.ready) {
+      // keep whatever loading or error message is showing
+    } else if (state.dishes.length === 0) {
+      $('count-line').textContent = 'No dishes yet. Be the first to add one.';
+    } else {
+      $('count-line').textContent = state.dishes.length + (state.dishes.length === 1 ? ' dish' : ' dishes') + ' so far';
+    }
+    $('bar-fill').style.width = (total ? Math.round(have / total * 100) : 0) + '%';
+    var gaps = $('gaps');
+    gaps.textContent = '';
+    var any = false;
+    CATS.forEach(function (c) {
+      var need = t[c] - counts[c];
+      if (need > 0) { any = true; gaps.appendChild(el('span', { class: 'chip', text: c + ': ' + need + ' more' })); }
+    });
+    if (!any && state.ready) gaps.appendChild(el('span', { class: 'chip done', text: 'Every course is covered' }));
+  }
+
+  var pendingRemove = null;
+  function renderList() {
+    var list = $('list');
+    list.textContent = '';
+    if (!state.ready) { list.appendChild(el('div', { class: 'state', text: listStateText })); return; }
+    var t = targets();
+    CATS.forEach(function (c) {
+      var items = state.dishes.filter(function (d) { return d.category === c; });
+      var g = el('div', { class: 'group' });
+      g.appendChild(el('div', { class: 'group-head' }, [
+        el('h2', { text: c, style: 'font-size:1.4rem' }),
+        el('span', { class: 'muted', text: items.length + ' of ' + t[c] })
+      ]));
+      items.forEach(function (d) {
+        var tags = (d.tags || []).join(' · ');
+        var what = el('div', { class: 'what' }, [
+          el('div', { class: 'name', text: d.dish }),
+          el('div', { text: 'Brought by ' + d.name }),
+          tags ? el('div', { class: 'tags', text: tags }) : null,
+          d.notes ? el('div', { class: 'tags', text: d.notes }) : null
+        ]);
+        var btn;
+        if (pendingRemove === d.id) {
+          var buttons = el('span', { class: 'btn-row', style: 'gap:8px' }, [
+            el('button', { class: 'btn small primary', type: 'button', 'data-act': 'confirm', 'data-id': d.id, text: 'Yes, remove it' }),
+            el('button', { class: 'btn small', type: 'button', 'data-act': 'cancel', text: 'Keep it' })
+          ]);
+          btn = el('div', { class: 'confirm' }, [
+            host.pass ? null : el('p', { class: 'tags', text: 'Only the host can remove a dish. Ask the host if you need yours taken off.' }),
+            host.pass ? null : el('label', { class: 'field', for: 'rm-pass' }, [
+              document.createTextNode('Host passcode'),
+              el('input', { type: 'password', id: 'rm-pass', maxlength: '100', autocomplete: 'current-password' })
+            ]),
+            buttons,
+            el('div', { class: 'msg', id: 'rm-msg', role: 'status', 'aria-live': 'polite' })
+          ]);
+        } else {
+          btn = el('button', { class: 'btn small', type: 'button', 'data-act': 'remove', 'data-id': d.id, 'aria-label': 'Remove ' + d.dish, text: 'Remove' });
+        }
+        g.appendChild(el('div', { class: 'dish' }, [what, btn]));
+      });
+      var open = Math.max(0, t[c] - items.length);
+      for (var i = 0; i < open; i++) {
+        g.appendChild(el('div', { class: 'empty-slot muted', text: 'Still open. Add a dish above.' }));
+      }
+      list.appendChild(g);
+    });
+  }
+
+  // While someone is confirming a removal, the list is left alone so their typing is not wiped.
+  function renderAll() {
+    renderEvent(); renderStatus();
+    if (!pendingRemove) renderList();
+    $('export').disabled = !state.ready;
+  }
+
+  var listStateText = 'Loading the list…';
+  function showLoadError() {
+    $('count-line').textContent = 'The list could not be loaded. Please check your internet connection and reload the page.';
+    listStateText = 'The shared list could not be reached.';
+    renderList();
+  }
+
+  $('list').addEventListener('click', function (ev) {
+    var b = ev.target.closest('button[data-act]');
+    if (!b) return;
+    var act = b.getAttribute('data-act');
+    if (act === 'remove') {
+      pendingRemove = b.getAttribute('data-id');
+      renderList();
+      var focusOn = $('rm-pass') || document.querySelector('#list button[data-act=confirm]');
+      if (focusOn) focusOn.focus();
+    } else if (act === 'cancel') {
+      pendingRemove = null; renderList();
+    } else if (act === 'confirm') {
+      confirmRemove(b);
+    }
+  });
+  $('list').addEventListener('keydown', function (ev) {
+    if (ev.key === 'Enter' && ev.target.id === 'rm-pass') {
+      ev.preventDefault();
+      var b = document.querySelector('#list button[data-act=confirm]');
+      if (b) confirmRemove(b);
+    }
+  });
+
+  var removing = false;
+  function confirmRemove(b) {
+    if (removing) return;
+    var id = b.getAttribute('data-id');
+    var passInput = $('rm-pass');
+    var pass = host.pass || (passInput ? passInput.value.trim() : '');
+    var msg = $('rm-msg');
+    if (!pass) { setMsg(msg, 'Please enter the host passcode.', true); if (passInput) passInput.focus(); return; }
+    removing = true;
+    b.disabled = true;
+    b.textContent = 'Removing…';
+    var usedSaved = !!host.pass;
+    write({ action: 'remove', id: id, passcode: pass }).then(function () {
+      if (!usedSaved) setHost(pass);
+      pendingRemove = null;
+      renderList();
+    }, function (e) {
+      if (e.code === 'bad_passcode' && usedSaved) logout();
+      renderList();
+      var m = $('rm-msg');
+      if (m) setMsg(m, errText(e, 'That did not work. Please try again.'), true);
+      var p = $('rm-pass');
+      if (p) p.focus();
+    }).then(function () { removing = false; });
+  }
+
+  /* ---------- add a dish ---------- */
+  var submitting = false, lastTry = null;
+  function newId() {
+    return 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  }
+  $('form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var msg = $('form-msg');
+    setMsg(msg, '');
+    if (!CONNECTED) { setMsg(msg, 'The list is not available right now. Please reload the page.', true); return; }
+    var name = $('f-name').value.trim(), dish = $('f-dish').value.trim();
+    if (!name || !dish) { setMsg(msg, 'Please fill in your name and the dish.', true); return; }
+    if (submitting) return;
+    submitting = true;
+    $('submit').disabled = true;
+    var cat = document.querySelector('input[name=cat]:checked');
+    var tags = Array.prototype.map.call(document.querySelectorAll('input[name=tag]:checked'), function (i) { return i.value; });
+    var payload = { name: name, dish: dish, category: cat ? cat.value : CATS[0], tags: tags, notes: $('f-notes').value.trim() };
+    // Pressing the button again after a failed try reuses the same ID, so the dish is never listed twice.
+    var sig = JSON.stringify(payload);
+    if (!lastTry || lastTry.sig !== sig) lastTry = { sig: sig, id: newId() };
+    payload.id = lastTry.id;
+    write({ action: 'add', dish: payload }).then(function () {
+      lastTry = null;
+      setMsg(msg, 'Thank you, ' + name + '. Your dish is on the list.');
+      $('f-dish').value = ''; $('f-notes').value = '';
+      Array.prototype.forEach.call(document.querySelectorAll('input[name=tag]'), function (i) { i.checked = false; });
+    }, function (e) {
+      setMsg(msg, errText(e, 'That did not save. Please try again.'), true);
+    }).then(function () { submitting = false; $('submit').disabled = false; });
+  });
+
+  /* ---------- Excel export ---------- */
+  function fmt(ts) {
+    if (!ts) return '';
+    var d = new Date(ts);
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2) + ' ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+  }
+  $('export').addEventListener('click', function () {
+    var msg = $('export-msg');
+    setMsg(msg, '');
+    if (typeof XLSX === 'undefined') { setMsg(msg, 'The Excel tool did not load. Please reload the page.', true); return; }
+    var t = targets();
+    var header = ['Added', 'Name', 'Dish', 'Course'].concat(TAGS).concat(['Notes']);
+    var rows = [header];
+    state.dishes.slice().sort(function (a, b) {
+      var ca = CATS.indexOf(a.category), cb = CATS.indexOf(b.category);
+      return ca - cb || (a.createdAt || 0) - (b.createdAt || 0);
+    }).forEach(function (d) {
+      var row = [fmt(d.createdAt), d.name, d.dish, d.category];
+      TAGS.forEach(function (tg) { row.push((d.tags || []).indexOf(tg) >= 0 ? 'Yes' : ''); });
+      row.push(d.notes || '');
+      rows.push(row);
+    });
+    var sum = [['Course', 'Dishes so far', 'Wanted', 'Still needed']];
+    CATS.forEach(function (c) {
+      var n = state.dishes.filter(function (d) { return d.category === c; }).length;
+      sum.push([c, n, t[c], Math.max(0, t[c] - n)]);
+    });
+    try {
+      var wb = XLSX.utils.book_new();
+      var ws1 = XLSX.utils.aoa_to_sheet(rows);
+      ws1['!cols'] = [{ wch: 17 }, { wch: 18 }, { wch: 30 }, { wch: 11 }, { wch: 11 }, { wch: 8 }, { wch: 12 }, { wch: 14 }, { wch: 15 }, { wch: 8 }, { wch: 36 }];
+      var ws2 = XLSX.utils.aoa_to_sheet(sum);
+      ws2['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 14 }];
+      XLSX.utils.book_append_sheet(wb, ws1, 'Dishes');
+      XLSX.utils.book_append_sheet(wb, ws2, 'Summary');
+      XLSX.writeFile(wb, 'potluck-list.xlsx'); // a normal browser download
+      setMsg(msg, 'Saved. Open potluck-list.xlsx from your Downloads folder in Excel.');
+    } catch (e) {
+      setMsg(msg, 'The file could not be saved here.', true);
+    }
+  });
+
+  /* ---------- host login and settings ---------- */
+  var tgtInputs = {};
+  CATS.forEach(function (c) {
+    var id = 'h-t-' + c;
+    var inp = el('input', { type: 'text', id: id, inputmode: 'numeric', maxlength: '2' });
+    tgtInputs[c] = inp;
+    $('h-targets').appendChild(el('label', { class: 'field', for: id }, [document.createTextNode(c), inp]));
+  });
+  var hostFilled = false;
+  function fillHost() {
+    var e = state.event || {};
+    ['title', 'date', 'time', 'place', 'address', 'contact'].forEach(function (k) { $('h-' + k).value = e[k] || ''; });
+    var t = targets();
+    CATS.forEach(function (c) { tgtInputs[c].value = t[c]; });
+    hostFilled = true;
+  }
+
+  function setHost(pass) {
+    host.pass = pass;
+    try { sessionStorage.setItem('potluck-host', pass); } catch (e) {}
+    $('host-h').textContent = 'Host settings';
+    $('host-note').textContent = 'You are logged in as the host. Changes show for everyone within a few seconds.';
+    $('login-form').hidden = true;
+    $('host-form').hidden = false;
+    hostFilled = false;
+    if (state.ready) fillHost();
+  }
+  function logout() {
+    host.pass = '';
+    try { sessionStorage.removeItem('potluck-host'); } catch (e) {}
+    $('host-h').textContent = 'Host login';
+    $('host-note').textContent = 'Only for the person running the potluck. Enter the host passcode to change the event details.';
+    $('login-form').hidden = false;
+    $('host-form').hidden = true;
+    setMsg($('host-msg'), '');
+    hostFilled = false;
+  }
+
+  $('login-form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var msg = $('login-msg'), btn = $('login-btn');
+    setMsg(msg, '');
+    var pass = $('h-pass').value.trim();
+    if (!pass) { setMsg(msg, 'Please enter the host passcode.', true); return; }
+    if (!CONNECTED) { setMsg(msg, 'The list is not available right now. Please reload the page.', true); return; }
+    btn.disabled = true; btn.textContent = 'Checking…';
+    api({ action: 'login', passcode: pass }).then(function () {
+      $('h-pass').value = '';
+      setHost(pass);
+      if (pendingRemove) renderList();
+      $('h-title').focus();
+    }, function (e) {
+      setMsg(msg, errText(e, 'That did not work. Please try again.'), true);
+    }).then(function () { btn.disabled = false; btn.textContent = 'Log in'; });
+  });
+
+  $('logout').addEventListener('click', function () {
+    logout();
+    if (pendingRemove) renderList();
+    $('h-pass').focus();
+  });
+
+  $('host-form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var msg = $('host-msg'), btn = $('host-save');
+    setMsg(msg, '');
+    var data = { targets: {} };
+    ['title', 'date', 'time', 'place', 'address', 'contact'].forEach(function (k) { data[k] = $('h-' + k).value.trim(); });
+    CATS.forEach(function (c) {
+      var v = parseInt(tgtInputs[c].value, 10);
+      data.targets[c] = isNaN(v) ? DEFAULT_TARGETS[c] : Math.max(0, Math.min(40, v));
+    });
+    btn.disabled = true;
+    write({ action: 'saveEvent', passcode: host.pass, event: data }).then(function () {
+      setMsg(msg, 'Saved.');
+    }, function (e) {
+      if (e.code === 'bad_passcode') {
+        logout();
+        setMsg($('login-msg'), 'That passcode is no longer right. Please log in again.', true);
+        $('h-pass').focus();
+      } else {
+        setMsg(msg, errText(e, 'That did not save. Please try again.'), true);
+      }
+    }).then(function () { btn.disabled = false; });
+  });
+
+  /* ---------- guest password ---------- */
+  function showGate(text) {
+    clearTimeout(pollTimer);
+    $('main').hidden = true;
+    $('gate').hidden = false;
+    setMsg($('gate-msg'), text || '', !!text);
+    $('g-pass').focus();
+  }
+  function lockOut() {
+    access = '';
+    try { localStorage.removeItem('potluck-access'); } catch (e) {}
+    showGate('Please enter the password again.');
+  }
+  $('gate-form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var msg = $('gate-msg'), btn = $('gate-btn');
+    var pass = $('g-pass').value.trim();
+    if (!pass) { setMsg(msg, 'Please enter the password from your invitation.', true); return; }
+    setMsg(msg, '');
+    btn.disabled = true; btn.textContent = 'Checking…';
+    access = pass;
+    var seq = ++lastSeq;
+    api(null).then(function (d) {
+      try { localStorage.setItem('potluck-access', pass); } catch (e) {}
+      $('g-pass').value = '';
+      $('gate').hidden = true;
+      $('main').hidden = false;
+      failCount = 0;
+      applyState(d, seq);
+      begin(false);
+      window.scrollTo(0, 0);
+    }, function (e) {
+      access = '';
+      setMsg(msg, e.code === 'need_access'
+        ? 'That password is not right. Please check your invitation and try again.'
+        : 'The list could not be loaded. Please check your internet connection and try again.', true);
+    }).then(function () { btn.disabled = false; btn.textContent = 'Open the potluck list'; });
+  });
+
+  /* ---------- start ---------- */
+  var failTimer = null;
+  function begin(loadNow) {
+    if (!state.ready) {
+      failTimer = setTimeout(function () {
+        if (!state.ready) $('count-line').textContent = 'The list could not be loaded. Please check your internet connection and reload the page.';
+      }, 12000);
+    }
+    // Stay logged in as host for this browser tab, if the passcode still works.
+    var saved = '';
+    try { saved = sessionStorage.getItem('potluck-host') || ''; } catch (e) {}
+    if (saved && !host.pass) {
+      setHost(saved);
+      api({ action: 'login', passcode: saved }).catch(function (e) {
+        if (e.code === 'bad_passcode' || e.code === 'no_passcode') logout();
+      });
+    }
+    if (loadNow) load(); else schedule();
+  }
+
+  renderAll();
+  if (!CONNECTED) {
+    $('count-line').textContent = 'This page is not connected to its Google Sheet yet.';
+    listStateText = 'The host needs to paste the web app address into the page settings.';
+    renderList();
+  } else if (!access) {
+    showGate();
+  } else {
+    begin(true);
+  }
+})();
+</script>
+</body>
+</html>
