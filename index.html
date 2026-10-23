@@ -113,6 +113,14 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
 .opt input:checked + span { background: var(--ok); font-weight: 700; }
 .opt input:checked + span::before { content: "\2713\00a0"; }
 .opt input:focus-visible + span { outline: 3px solid var(--fg); outline-offset: 3px; }
+.opt.has-tip::after {
+  content: attr(data-tip); position: absolute; left: 0; bottom: calc(100% + 10px); z-index: 2;
+  padding: 6px 14px; border: 2px solid var(--line); border-radius: 999px;
+  background: var(--accent); color: var(--accent-fg); font-weight: 700; white-space: nowrap;
+  box-shadow: 3px 3px 0 var(--line); pointer-events: none;
+  opacity: 0; transform: translateY(6px); transition: opacity 0.2s, transform 0.2s;
+}
+.opt.has-tip:hover::after, .opt.has-tip:focus-within::after { opacity: 1; transform: none; }
 .msg { font-weight: 700; min-height: 1.5em; }
 .msg.err { color: var(--accent); }
 .msg:empty { min-height: 0; }
@@ -525,9 +533,13 @@ input::placeholder { color: var(--muted); opacity: 0.8; }
   }
 
   /* ---------- forms ---------- */
+  // A little message that pops up over some options (on hover, or when tapped on a phone).
+  var TAG_TIPS = { 'Contains carmine/natural red dye': 'Shout out to Nadya!' };
   TAGS.forEach(function (label, i) {
     var id = 'tag-' + i;
-    $('tag-opts').appendChild(el('label', { class: 'opt', for: id }, [
+    var props = { class: 'opt', for: id };
+    if (TAG_TIPS[label]) { props.class = 'opt has-tip'; props['data-tip'] = TAG_TIPS[label]; }
+    $('tag-opts').appendChild(el('label', props, [
       el('input', { type: 'checkbox', name: 'tag', id: id, value: label }),
       el('span', { text: label })
     ]));
