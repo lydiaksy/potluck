@@ -109,6 +109,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .detail b { display: block; }
 .map-link { display: block; width: fit-content; margin-top: var(--sp-1); font-weight: 700; color: var(--tomato); text-underline-offset: 3px; }
 .muted { color: var(--muted); }
+.caption { font-size: 0.85rem; font-weight: 500; margin-top: calc(var(--sp-2) * -1); }
 
 .hero { display: flex; flex-direction: column; gap: var(--sp-4); align-items: flex-start; }
 .hero .card { align-self: stretch; }
@@ -264,7 +265,10 @@ body.is-loading .details .cat { transform-origin: 50% 100%; animation: cat-bob 1
 .menu-table .notes-inline { display: none; }
 .menu-table td.type, .menu-table th.type { width: 1%; white-space: nowrap; }
 .menu-table .tchip { font-size: 0.8rem; line-height: 1.3; padding: 0 10px; }
-.menu-table .dish > .btn { margin-top: var(--sp-1); }
+.menu-table .dish > .btn { margin-top: 4px; }
+/* Compact buttons inside the tables so Remove fits the row instead of towering over it. */
+.menu-table .btn.small { min-height: 28px; padding: 2px 12px; border-width: 1.5px; font-size: 0.8rem; font-weight: 500; box-shadow: none; }
+.menu-table .confirm { gap: 4px; }
 .menu-table .confirm { display: flex; flex-direction: column; gap: var(--sp-1); margin-top: var(--sp-1); }
 .skel.row-skel { height: 44px; }
 .skel.row-skel.head { height: 48px; background: color-mix(in srgb, var(--head) 70%, var(--surface)); }
@@ -430,6 +434,7 @@ body.is-loading .details .cat { transform-origin: 50% 100%; animation: cat-bob 1
         <img class="illo art" src="assets/dietry%20needs.svg?v=1650" alt="" width="104" height="76" onerror="this.remove()">
       </summary>
       <div class="fold-body">
+      <p class="muted caption">Please prepare food for 8&ndash;10 people.</p>
       <form id="form" autocomplete="off" novalidate>
         <label class="field" for="f-name">Your name
           <input type="text" id="f-name" maxlength="60" required>
