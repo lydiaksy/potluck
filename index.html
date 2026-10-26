@@ -126,14 +126,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .fold > summary::-webkit-details-marker { display: none; }
 .chev {
   display: inline-flex; vertical-align: middle; position: relative; top: -0.12em;
-  width: 40px; height: 40px; margin-left: var(--sp-1); border: 2px solid var(--line); border-radius: 50%; background: var(--surface);
+  width: 28px; height: 28px; margin-left: var(--sp-1); border: 2px solid var(--line); border-radius: 50%; background: var(--surface);
 }
 .chev::before {
-  content: ""; width: 10px; height: 10px; margin: auto; position: relative; top: -2px;
-  border-right: 3px solid var(--fg); border-bottom: 3px solid var(--fg); transform: rotate(45deg);
+  content: ""; width: 7px; height: 7px; margin: auto; position: relative; top: -2px;
+  border-right: 2.5px solid var(--fg); border-bottom: 2.5px solid var(--fg); transform: rotate(45deg);
   transition: transform 0.2s;
 }
-.fold[open] .chev::before { transform: rotate(-135deg); top: 2px; }
+.fold[open] .chev::before { transform: rotate(-135deg); top: 1px; }
 .fold-hint { display: none; font-weight: 700; color: var(--muted); margin-top: var(--sp-1); }
 .fold:not([open]) .fold-hint { display: block; }
 .fold-body { display: flex; flex-direction: column; gap: var(--sp-3); margin-top: var(--sp-4); }
@@ -351,7 +351,7 @@ body.is-loading .details .cat { transform-origin: 50% 100%; animation: cat-bob 1
   .illo { width: 104px; }
   .illo.table { width: 160px; }
   .sec-head h2 { font-size: 1.85rem; }
-  .chev { width: 34px; height: 34px; }
+  .chev { width: 24px; height: 24px; }
   /* Phones: the type moves under the dish name, so three columns fit: #, Name, Dish. */
   .menu-table th, .menu-table td { padding: 10px; }
   .menu-table td.type, .menu-table th.type, .menu-table td.notes, .menu-table th.notes { display: none; }
