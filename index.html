@@ -255,6 +255,8 @@ body.is-loading .details .cat { transform-origin: 50% 100%; animation: cat-bob 1
 .menu-table tbody tr.group-start:not(:nth-child(2)) td { border-top: 2px solid var(--line); }
 .menu-table tbody tr.alt td { background: color-mix(in srgb, var(--line) 5%, var(--surface)); }
 .diet-table tbody tr:first-child td { border-top: 0; }
+.diet-table td.notes, .diet-table th.notes { width: 30%; }
+.diet-table .notes-wrap { justify-content: flex-end; }
 .menu-table .group-row { display: none; }
 .menu-table .group-row th { background: var(--tone, var(--t-other)); padding: 6px 12px; font-weight: 700; border-bottom: 1px solid color-mix(in srgb, var(--line) 30%, transparent); }
 .menu-table .num { width: 2.4em; padding-right: 0; text-align: right; color: var(--muted); font-weight: 700; }
@@ -920,15 +922,19 @@ body.is-loading .details .cat { transform-origin: 50% 100%; animation: cat-bob 1
         el('td', { class: 'who', text: d.name }),
         el('td', { class: 'dish' }, [
           el('div', { text: d.needs }),
-          removeControls('diet', d, d.name + "'s dietary need")
-        ])
+          phoneMenu.matches ? removeControls('diet', d, d.name + "'s dietary need") : null // phones have no spare column
+        ]),
+        el('td', { class: 'notes small' }, [el('div', { class: 'notes-wrap' }, [
+          phoneMenu.matches ? null : removeControls('diet', d, d.name + "'s dietary need") // right-hand side of the row, like the menu
+        ])])
       ]));
     });
     list.appendChild(el('table', { class: 'menu-table diet-table' }, [
       el('thead', null, [el('tr', null, [
         el('th', { class: 'num', scope: 'col', 'aria-label': 'Number', text: '#' }),
         el('th', { scope: 'col', text: 'Name' }),
-        el('th', { scope: 'col', text: 'Dietary needs' })
+        el('th', { scope: 'col', text: 'Dietary needs' }),
+        el('th', { class: 'notes', scope: 'col', 'aria-label': 'Remove' })
       ])]),
       body
     ]));
