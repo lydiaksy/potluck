@@ -109,7 +109,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .detail b { display: block; }
 .map-link { display: block; width: fit-content; margin-top: var(--sp-1); font-weight: 700; color: var(--tomato); text-underline-offset: 3px; }
 .muted { color: var(--muted); }
-.caption { font-size: 0.85rem; font-weight: 500; margin-top: calc(var(--sp-2) * -1); }
+.caption { font-size: 0.85rem; font-weight: 500; font-style: italic; margin-top: calc(var(--sp-2) * -1); }
 
 .hero { display: flex; flex-direction: column; gap: var(--sp-4); align-items: flex-start; }
 .hero .card { align-self: stretch; }
@@ -440,7 +440,7 @@ body.is-loading .details .cat { transform-origin: 50% 100%; animation: cat-bob 1
         <img class="illo art" src="assets/dietry%20needs.svg?v=1650" alt="" width="104" height="76" onerror="this.remove()">
       </summary>
       <div class="fold-body">
-      <p class="muted caption">Please prepare food for 8&ndash;10 people.</p>
+      <p class="muted caption">Please prepare food for approximately 8-10 pax</p>
       <form id="form" autocomplete="off" novalidate>
         <label class="field" for="f-name">Your name
           <input type="text" id="f-name" maxlength="60" required>
