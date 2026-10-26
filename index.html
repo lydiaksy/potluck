@@ -109,6 +109,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .detail b { display: block; }
 .map-link { display: block; width: fit-content; margin-top: var(--sp-1); font-weight: 700; color: var(--tomato); text-underline-offset: 3px; }
 .muted { color: var(--muted); }
+.caption { font-size: 0.85rem; font-weight: 500; font-style: italic; margin-top: calc(var(--sp-2) * -1); }
 
 .hero { display: flex; flex-direction: column; gap: var(--sp-4); align-items: flex-start; }
 .hero .card { align-self: stretch; }
@@ -254,18 +255,27 @@ body.is-loading .details .cat { transform-origin: 50% 100%; animation: cat-bob 1
 .menu-table tbody tr.group-start:not(:nth-child(2)) td { border-top: 2px solid var(--line); }
 .menu-table tbody tr.alt td { background: color-mix(in srgb, var(--line) 5%, var(--surface)); }
 .diet-table tbody tr:first-child td { border-top: 0; }
+.diet-table td.notes, .diet-table th.notes { width: 30%; }
+.diet-table .notes-wrap { justify-content: flex-end; }
 .menu-table .group-row { display: none; }
 .menu-table .group-row th { background: var(--tone, var(--t-other)); padding: 6px 12px; font-weight: 700; border-bottom: 1px solid color-mix(in srgb, var(--line) 30%, transparent); }
 .menu-table .num { width: 2.4em; padding-right: 0; text-align: right; color: var(--muted); font-weight: 700; }
 .menu-table .who { width: 22%; font-weight: 700; overflow-wrap: break-word; }
 .menu-table .dish { overflow-wrap: break-word; }
 .menu-table .small:not(.btn) { font-size: 0.8rem; color: var(--muted); }
-.menu-table td.notes { width: 30%; overflow-wrap: anywhere; }
+.menu-table td.notes { width: 34%; overflow-wrap: anywhere; }
 .menu-table .notes-inline { display: none; }
+.menu-table .notes-wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px var(--sp-2); }
+.menu-table .notes-wrap > .btn { margin: 0 0 0 auto; flex: none; }
+.menu-table .notes-wrap > .confirm { margin: 0; flex: 1 1 100%; } /* "Yes, remove it" / "Keep it" drop under the notes */
+.menu-table .notes-wrap .btn-row { flex-wrap: nowrap; }
+.menu-table .notes-wrap > span { flex: 1 1 0; min-width: 4em; }
 .menu-table td.type, .menu-table th.type { width: 1%; white-space: nowrap; }
 .menu-table .tchip { font-size: 0.8rem; line-height: 1.3; padding: 0 10px; }
-.menu-table .dish > .btn { margin-top: var(--sp-1); }
-.menu-table .confirm { display: flex; flex-direction: column; gap: var(--sp-1); margin-top: var(--sp-1); }
+.menu-table .dish > .btn { margin-top: 4px; }
+/* Compact buttons inside the tables so Remove fits the row instead of towering over it. */
+.menu-table .btn.small { white-space: nowrap; min-height: 28px; padding: 2px 12px; border-width: 1.5px; font-size: 0.8rem; font-weight: 500; box-shadow: none; }
+.menu-table .confirm { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
 .skel.row-skel { height: 44px; }
 .skel.row-skel.head { height: 48px; background: color-mix(in srgb, var(--head) 70%, var(--surface)); }
 .menu-skel { display: flex; flex-direction: column; gap: 6px; }
@@ -430,6 +440,7 @@ body.is-loading .details .cat { transform-origin: 50% 100%; animation: cat-bob 1
         <img class="illo art" src="assets/dietry%20needs.svg?v=1650" alt="" width="104" height="76" onerror="this.remove()">
       </summary>
       <div class="fold-body">
+      <p class="muted caption">Please prepare food for approximately 8-10 pax</p>
       <form id="form" autocomplete="off" novalidate>
         <label class="field" for="f-name">Your name
           <input type="text" id="f-name" maxlength="60" required>
@@ -816,6 +827,9 @@ body.is-loading .details .cat { transform-origin: 50% 100%; animation: cat-bob 1
   }
   $('jump-add').addEventListener('click', jumpTo);
   $('jump-diet').addEventListener('click', jumpTo);
+  // Where the Remove button sits depends on the layout, so draw again when the window crosses the phone breakpoint.
+  var phoneMenu = window.matchMedia('(max-width: 520px)');
+  if (phoneMenu.addEventListener) phoneMenu.addEventListener('change', function () { renderAll(); });
   function renderMenu() {
     var list = $('list');
     list.textContent = '';
@@ -869,10 +883,13 @@ body.is-loading .details .cat { transform-origin: 50% 100%; animation: cat-bob 1
           el('td', { class: 'dish' }, [
             el('div', { text: d.dish }),
             extra ? el('div', { class: 'small notes-inline', text: extra }) : null, // phones only
-            removeControls('dish', d, d.dish)
+            phoneMenu.matches ? removeControls('dish', d, d.dish) : null // phones have no Notes column
           ]),
           el('td', { class: 'type' }, [el('span', { class: 'tchip ' + tone, text: type })]),
-          el('td', { class: 'notes small', text: extra })
+          el('td', { class: 'notes small' }, [el('div', { class: 'notes-wrap' }, [
+            el('span', { text: extra }),
+            phoneMenu.matches ? null : removeControls('dish', d, d.dish) // next to the notes, on the same row
+          ])])
         ]));
       });
     });
@@ -905,15 +922,19 @@ body.is-loading .details .cat { transform-origin: 50% 100%; animation: cat-bob 1
         el('td', { class: 'who', text: d.name }),
         el('td', { class: 'dish' }, [
           el('div', { text: d.needs }),
-          removeControls('diet', d, d.name + "'s dietary need")
-        ])
+          phoneMenu.matches ? removeControls('diet', d, d.name + "'s dietary need") : null // phones have no spare column
+        ]),
+        el('td', { class: 'notes small' }, [el('div', { class: 'notes-wrap' }, [
+          phoneMenu.matches ? null : removeControls('diet', d, d.name + "'s dietary need") // right-hand side of the row, like the menu
+        ])])
       ]));
     });
     list.appendChild(el('table', { class: 'menu-table diet-table' }, [
       el('thead', null, [el('tr', null, [
         el('th', { class: 'num', scope: 'col', 'aria-label': 'Number', text: '#' }),
         el('th', { scope: 'col', text: 'Name' }),
-        el('th', { scope: 'col', text: 'Dietary needs' })
+        el('th', { scope: 'col', text: 'Dietary needs' }),
+        el('th', { class: 'notes', scope: 'col', 'aria-label': 'Remove' })
       ])]),
       body
     ]));
