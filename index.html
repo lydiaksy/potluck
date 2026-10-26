@@ -4,11 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Potluck dinner</title>
+<title>GLAM Asia, PCC Integration &amp; Remain COE Team Potluck Dinner for Thanksgiving</title>
 <script>
 /* ===== Settings: the Apps Script web app address (ends in /exec). ===== */
 var POTLUCK_CONFIG = {
   apiUrl: 'https://script.google.com/macros/s/AKfycbx79Bqane_blpkFxYWj3SPx0tXHfyrh3nApTAiiEFKDoJjFU7HW96qJ2OcpS-CQPGuo/exec',
+  title: 'GLAM Asia, PCC Integration & Remain COE Team Potluck Dinner for Thanksgiving', // shown as the page heading; leave empty to use the Event tab's title
   refreshSeconds: 12,
   dishGoal: 20 // the menu bar is full at this many dishes
 };
@@ -125,14 +126,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .fold > summary::-webkit-details-marker { display: none; }
 .chev {
   display: inline-flex; vertical-align: middle; position: relative; top: -0.12em;
-  width: 40px; height: 40px; margin-left: var(--sp-1); border: 2px solid var(--line); border-radius: 50%; background: var(--surface);
+  width: 28px; height: 28px; margin-left: var(--sp-1); border: 2px solid var(--line); border-radius: 50%; background: var(--surface);
 }
 .chev::before {
-  content: ""; width: 10px; height: 10px; margin: auto; position: relative; top: -2px;
-  border-right: 3px solid var(--fg); border-bottom: 3px solid var(--fg); transform: rotate(45deg);
+  content: ""; width: 7px; height: 7px; margin: auto; position: relative; top: -2px;
+  border-right: 2.5px solid var(--fg); border-bottom: 2.5px solid var(--fg); transform: rotate(45deg);
   transition: transform 0.2s;
 }
-.fold[open] .chev::before { transform: rotate(-135deg); top: 2px; }
+.fold[open] .chev::before { transform: rotate(-135deg); top: 1px; }
 .fold-hint { display: none; font-weight: 700; color: var(--muted); margin-top: var(--sp-1); }
 .fold:not([open]) .fold-hint { display: block; }
 .fold-body { display: flex; flex-direction: column; gap: var(--sp-3); margin-top: var(--sp-4); }
@@ -350,7 +351,7 @@ body.is-loading .details .cat { transform-origin: 50% 100%; animation: cat-bob 1
   .illo { width: 104px; }
   .illo.table { width: 160px; }
   .sec-head h2 { font-size: 1.85rem; }
-  .chev { width: 34px; height: 34px; }
+  .chev { width: 24px; height: 24px; }
   /* Phones: the type moves under the dish name, so three columns fit: #, Name, Dish. */
   .menu-table th, .menu-table td { padding: 10px; }
   .menu-table td.type, .menu-table th.type, .menu-table td.notes, .menu-table th.notes { display: none; }
@@ -393,7 +394,7 @@ body.is-loading .details .cat { transform-origin: 50% 100%; animation: cat-bob 1
   <div id="main">
     <header class="hero">
       <div class="title-wrap">
-        <h1 id="title">Potluck dinner</h1>
+        <h1 id="title">GLAM Asia, PCC Integration &amp; Remain COE Team Potluck Dinner for Thanksgiving</h1>
       </div>
       <div class="card details" id="details" aria-live="polite">
         <img class="cat" src="assets/cat%20on%20the%20title.svg?v=1650" alt="" width="118" height="86" onerror="this.remove()">
@@ -714,8 +715,9 @@ body.is-loading .details .cat { transform-origin: 50% 100%; animation: cat-bob 1
 
   function renderEvent() {
     var e = state.event || {};
-    $('title').textContent = e.title || 'Potluck dinner';
-    document.title = e.title || 'Potluck dinner';
+    var title = CONFIG.title || e.title || 'Potluck dinner';
+    $('title').textContent = title;
+    document.title = title;
     var box = $('details');
     Array.prototype.slice.call(box.querySelectorAll('.detail')).forEach(function (n) { n.remove(); });
     var has = false;
