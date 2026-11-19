@@ -10,6 +10,7 @@
 var POTLUCK_CONFIG = {
   apiUrl: 'https://script.google.com/macros/s/AKfycbx79Bqane_blpkFxYWj3SPx0tXHfyrh3nApTAiiEFKDoJjFU7HW96qJ2OcpS-CQPGuo/exec',
   title: 'GLAM Asia, PCC Integration & Remain COE Team Potluck Dinner for Thanksgiving', // shown as the page heading; leave empty to use the Event tab's title
+  time: '5:30pm prep\n6pm dinner starts', // shown under the date; leave empty to use the Event tab's time
   refreshSeconds: 12,
   dishGoal: 20 // the menu bar is full at this many dishes
 };
@@ -108,6 +109,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .detail { display: flex; gap: var(--sp-2); align-items: flex-start; }
 .detail svg { flex: none; margin-top: 4px; }
 .detail b { display: block; }
+.detail .when { white-space: pre-line; } /* a new line in the time stays a new line */
 .map-link { display: block; width: fit-content; margin-top: var(--sp-1); font-weight: 700; color: var(--tomato); text-underline-offset: 3px; }
 .muted { color: var(--muted); }
 .caption { font-size: 0.85rem; font-weight: 500; font-style: italic; margin-top: calc(var(--sp-2) * -1); }
@@ -729,11 +731,11 @@ body.is-loading .details .cat { transform-origin: 50% 100%; animation: cat-bob 1
         box.insertBefore(el('div', { class: 'detail skel-row', 'aria-hidden': 'true' }, [skel('skel-ico'), lines]), $('no-details'));
       });
     }
-    if (e.date || e.time) {
+    if (e.date || e.time || CONFIG.time) {
       has = true;
       var d = el('div', { class: 'detail' });
       d.innerHTML = ICON_CAL;
-      d.appendChild(el('div', null, [el('b', { text: e.date || '' }), el('span', { text: e.time || '' })]));
+      d.appendChild(el('div', null, [el('b', { text: e.date || '' }), el('span', { class: 'when', text: CONFIG.time || e.time || '' })]));
       box.insertBefore(d, $('no-details'));
     }
     if (e.place || e.address) {
